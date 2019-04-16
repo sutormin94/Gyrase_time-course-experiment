@@ -27,44 +27,21 @@ from scipy import stats
 from Bio import SeqIO
 from Bio.SeqUtils import GC as GC_count
 import matplotlib.patheffects as PathEffects
+import locale
+
+locale.getdefaultlocale()
 
 #######
 #Variables to be defined.
 #######
 
 #Path to the working directory
-pwd="/data/Gyrase/Data_preparation"
+pwd="C:\Sutor\science\DNA-gyrase\Results\E_coli_synch_time-course_Topo-Seq\Seq_results\\"
 #Path to the file with regions to be omitted (e.g. deletions).
-Deletions="/data/Gyrase/Genomes_tracks/Deletions.bed"
-#Paths to the WIG files contain N3E or N5E that forms a tetrade: A+IP+, A+IP-, A-IP+, A-IP-.
-#Name of the set (e.g. Cfx, RifCfx, Micro, Oxo and so on).
-'''
-'A+IP-': pwd + "/RifCfx/WIG/RifCfx_IN_Mu_122mkM_10mkM_1_edt_N3E.wig",
-         'A-IP+': pwd + "/Un/WIG/Un_IP_Mu_2_edt_N3E.wig", 
-         'A-IP-': pwd + "/RifCfx/WIG/Rif_IN_Mu_122mkM_1_edt_N3E.wig",
-         'Tetrade name': 'RifCfx_1'
-         }
-'''
-Tetrade={'A+IP+': pwd + "/Un/WIG/Un_IP_Mu_2_edt_N3E.wig", 
-         'A+IP-': pwd + "/Un/WIG/Un_IN_Mu_2_edt_N3E.wig",
-         'A-IP+': pwd + "/Un/WIG/Un_IP_Mu_1_edt_N3E.wig", 
-         'A-IP-': pwd + "/Un/WIG/Un_IN_Mu_1_edt_N3E.wig",
-         'Tetrade name': 'Un_2_1'
-         }
-'''
-Tetrade={'A+IP+': "/data/Gyrase/Stuff/Pipe/Fragments_ends/Data_second_mapping/Cfx_IP_10_mkM_2_ends.wig", 
-         'A+IP-': "/data/Gyrase/Stuff/Pipe/Fragments_ends/Data_second_mapping/Cfx_IN_10_mkM_3_ends.wig",
-         'A-IP+': "/data/Gyrase/Stuff/Pipe/Fragments_ends/Data_second_mapping/Un_IN_1_ends.wig", 
-         'A-IP-': "/data/Gyrase/Stuff/Pipe/Fragments_ends/Data_second_mapping/Un_IN_2_ends.wig",
-         'Tetrade name': 'Cfx_3_Un_old'
-         }
-'''
+Deletions="C:\Sutor\science\DNA-gyrase\scripts\Gyrase_Topo-seq\Additional_genome_features\Deletions_w3110_G_Mu_SGS.broadPeak"
 #Path to the reference genome
-Genome="/data/Gyrase/Genomes_tracks/E_coli_w3110_G_Mu.fasta"
-#Output folder
-Path_for_output=pwd + "/RifCfx/GCSs_calling_0_05_Un/" + Tetrade['Tetrade name'] + "/"
-if not os.path.exists(Path_for_output):
-    os.makedirs(Path_for_output)
+Genome="C:\Sutor\science\DNA-gyrase\scripts\Gyrase_Topo-seq\Additional_genome_features\E_coli_w3110_G_Mu.fasta"
+
 
 
 #######
@@ -196,7 +173,7 @@ def norm_smooth_devide(ex_file_path, cont_file_path, un_ex_file_path, un_cont_fi
 def AC_stat(x):
     x+=-1
     #Confidential intervals borders (from Audic & Claverie, 1997).
-    confidence=0.05
+    confidence=0.01
     if confidence==0.05:
         AU_test=[5,7,9,11,12,14,16,17,19,20,22,23,24,26,27,28,30,31,32,34,35]
         AU_test20=20*1.75
@@ -434,7 +411,7 @@ def GCSs_caller(tetrade_dictionary, deletions_inpath, genome_path, path_out):
     #Returns "seqs" array contains sequences under the GCSs within the win_width vicinity of the GCSs.
     seqs=[]
     for i in range(len(GCSs)):
-        seq=genome_fasta[int(GCSs[i])-win_width/2:int(GCSs[i])+win_width/2]
+        seq=genome_fasta[int(GCSs[i])-int(win_width/2):int(GCSs[i])+int(win_width/2)]
         seqs.append(seq)
     print('Number of sequences obtained: ' + str(len(seqs)))
     if len(seqs)==0:
@@ -455,6 +432,209 @@ def GCSs_caller(tetrade_dictionary, deletions_inpath, genome_path, path_out):
     GCSs_out.close()
     return
 
-GCSs_caller(Tetrade, Deletions, Genome, Path_for_output)
+'''
+#############
+###########R1
+#############
+#Paths to the WIG files contain N3E or N5E that forms a tetrade: A+IP+, A+IP-, A-IP+, A-IP-.
+#Name of the set (e.g. Cfx, RifCfx, Micro, Oxo and so on).
+Tetrade_minus_3_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_17_S97_edt_N3E.wig",
+                     'A+IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\0_DSu_9_S89_edt_N3E.wig",
+                     'A-IP+': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\0_DSu_9_S89_edt_N3E.wig", 
+                     'A-IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\0_DSu_9_S89_edt_N3E.wig",
+                     'Tetrade name': '-3_min'
+                     }   
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_minus_3_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_minus_3_min, Deletions, Genome, Path_for_output)
+
+Tetrade_0_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_18_S98_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\1_DSu_11_S91_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\1_DSu_11_S91_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\1_DSu_11_S91_edt_N3E.wig",
+               'Tetrade name': '0_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_0_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)  
+GCSs_caller(Tetrade_0_min, Deletions, Genome, Path_for_output)
+
+Tetrade_5_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_19_S99_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\2_DSu_10_S90_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\2_DSu_10_S90_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\2_DSu_10_S90_edt_N3E.wig",
+               'Tetrade name': '5_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_5_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_5_min, Deletions, Genome, Path_for_output)
+
+Tetrade_10_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_20_S100_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\3_DSu_12_S92_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\3_DSu_12_S92_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\3_DSu_12_S92_edt_N3E.wig",
+               'Tetrade name': '10_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_10_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_10_min, Deletions, Genome, Path_for_output)
+
+Tetrade_15_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_21_S101_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\4_DSu_15_S95_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\4_DSu_15_S95_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\4_DSu_15_S95_edt_N3E.wig",
+               'Tetrade name': '15_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_15_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_15_min, Deletions, Genome, Path_for_output)
+
+Tetrade_20_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_22_S102_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\5_DSu_14_S94_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\5_DSu_14_S94_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\5_DSu_14_S94_edt_N3E.wig",
+               'Tetrade name': '20_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_20_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_20_min, Deletions, Genome, Path_for_output)
+
+Tetrade_25_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_23_S103_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\6_DSu_13_S93_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\6_DSu_13_S93_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\6_DSu_13_S93_edt_N3E.wig",
+               'Tetrade name': '25_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_25_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_25_min, Deletions, Genome, Path_for_output)
+
+Tetrade_30_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_24_S104_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\7_DSu_16_S96_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\7_DSu_16_S96_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R1\-IP+Cfx\\7_DSu_16_S96_edt_N3E.wig",
+               'Tetrade name': '30_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_30_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_30_min, Deletions, Genome, Path_for_output)
+'''
+
+
+#############
+###########R2
+#############
+#Paths to the WIG files contain N3E or N5E that forms a tetrade: A+IP+, A+IP-, A-IP+, A-IP-.
+#Name of the set (e.g. Cfx, RifCfx, Micro, Oxo and so on).
+Tetrade_minus_3_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_41_S113_edt_N3E.wig",
+                     'A+IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_33_S105_edt_N3E.wig",
+                     'A-IP+': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_33_S105_edt_N3E.wig", 
+                     'A-IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_33_S105_edt_N3E.wig",
+                     'Tetrade name': '-3_min'
+                     }   
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_minus_3_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_minus_3_min, Deletions, Genome, Path_for_output)
+
+Tetrade_0_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_42_S114_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_34_S106_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_34_S106_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_34_S106_edt_N3E.wig",
+               'Tetrade name': '0_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_0_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)  
+GCSs_caller(Tetrade_0_min, Deletions, Genome, Path_for_output)
+
+Tetrade_5_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_43_S115_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_35_S107_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_35_S107_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_35_S107_edt_N3E.wig",
+               'Tetrade name': '5_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_5_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_5_min, Deletions, Genome, Path_for_output)
+
+Tetrade_10_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_44_S116_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_36_S108_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_36_S108_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_36_S108_edt_N3E.wig",
+               'Tetrade name': '10_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_10_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_10_min, Deletions, Genome, Path_for_output)
+
+Tetrade_15_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_45_S117_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_37_S109_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_37_S109_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_37_S109_edt_N3E.wig",
+               'Tetrade name': '15_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_15_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_15_min, Deletions, Genome, Path_for_output)
+
+Tetrade_20_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_46_S118_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_38_S110_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_38_S110_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_38_S110_edt_N3E.wig",
+               'Tetrade name': '20_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_20_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_20_min, Deletions, Genome, Path_for_output)
+
+Tetrade_25_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_47_S119_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_39_S111_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_39_S111_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_39_S111_edt_N3E.wig",
+               'Tetrade name': '25_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_25_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_25_min, Deletions, Genome, Path_for_output)
+
+Tetrade_30_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_48_S120_edt_N3E.wig", 
+               'A+IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_40_S112_edt_N3E.wig",
+               'A-IP+': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_40_S112_edt_N3E.wig", 
+               'A-IP-': pwd + "Raw_wig\\N3E\R2\-IP+Cfx\\DSu_40_S112_edt_N3E.wig",
+               'Tetrade name': '30_min'
+               }
+#Output folder
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_30_min['Tetrade name'] + "\\"
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_30_min, Deletions, Genome, Path_for_output)
 
 print('Script ended its work succesfully!')
