@@ -111,14 +111,14 @@ def wig_parsing(wigfile):
 
 #######
 #Returns smoothed N3/5E tracks.
-#Smoothing using sliding window (default - 200000 nt).
+#Smoothing using sliding window (default - 100000 nt).
 #######
 
 def Smoothing(ends, deletions):
     smoothed=[]
     #Calculating the value for the first genome position
     mean=0.0
-    window=100000
+    window=10000
     window_float=float(window)
     for i in range(-window, window):
         mean=mean + get_value(i, ends, deletions)
@@ -126,6 +126,8 @@ def Smoothing(ends, deletions):
     smoothed.append(mean)
     #Calculating values for the part of the genome remains
     for i in range(1, len(ends)):
+        #if i%100000==0:
+        #    print(i)
         mean=mean + (get_value(i+window, ends, deletions) - get_value(i-window, ends, deletions))/(2*window_float)
         smoothed.append(mean)
     return smoothed
@@ -142,12 +144,22 @@ def norm_smooth_devide(ex_file_path, cont_file_path, un_ex_file_path, un_cont_fi
     untreated_control=wig_parsing(un_cont_file_path) #-A-IP
     #Normalization on the reads number
     #Adds pseudocounts to avoid zero values
-    Min_total_NE=min(treated_experiment[1], treated_control[1], untreated_experiment[1], untreated_control[1])
+    te=np.mean(treated_experiment[0][0:2500000])
+    tc=np.mean(treated_control[0][0:2500000]) 
+    ue=np.mean(untreated_experiment[0][0:2500000])
+    uc=np.mean(untreated_control[0][0:2500000])
+    norm_array=[te, tc, ue, uc]
+    print(norm_array)
+    Min_total_NE=min(norm_array)
     print('Min_total_NE: ' + str(Min_total_NE))
-    treated_experiment_norm=[1.0 * (x + 1) * Min_total_NE/treated_experiment[1] for x in treated_experiment[0]] #+A+IP norm
-    treated_control_norm=[1.0 * (x + 1) * Min_total_NE/treated_control[1] for x in treated_control[0]] #+A-IP norm
-    untreated_experiment_norm=[1.0 * (x + 1) * Min_total_NE/untreated_experiment[1] for x in untreated_experiment[0]] #-A+IP norm
-    untreated_control_norm=[1.0 * (x + 1) * Min_total_NE/untreated_control[1] for x in untreated_control[0]] #-A-IP norm
+    treated_experiment_norm=[1.0 * (x + 1) * Min_total_NE/norm_array[0] for x in treated_experiment[0]] #+A+IP norm
+    print('Passed!')
+    treated_control_norm=[1.0 * (x + 1) * Min_total_NE/norm_array[1] for x in treated_control[0]] #+A-IP norm
+    print('Passed!')
+    untreated_experiment_norm=[1.0 * (x + 1) * Min_total_NE/norm_array[2] for x in untreated_experiment[0]] #-A+IP norm
+    print('Passed!')
+    untreated_control_norm=[1.0 * (x + 1) * Min_total_NE/norm_array[3] for x in untreated_control[0]] #-A-IP norm
+    print('Passed!')
     #Control samples smoothing: A+IP- and A-IP-
     un_experiment_norm_sm=Smoothing(untreated_experiment_norm, deletions) #-A+IP norm sm 
     un_control_norm_sm=Smoothing(untreated_control_norm, deletions) #-A-IP norm sm
@@ -173,7 +185,7 @@ def norm_smooth_devide(ex_file_path, cont_file_path, un_ex_file_path, un_cont_fi
 def AC_stat(x):
     x+=-1
     #Confidential intervals borders (from Audic & Claverie, 1997).
-    confidence=0.01
+    confidence=0.05
     if confidence==0.05:
         AU_test=[5,7,9,11,12,14,16,17,19,20,22,23,24,26,27,28,30,31,32,34,35]
         AU_test20=20*1.75
@@ -445,7 +457,7 @@ Tetrade_minus_3_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_17_S97_edt_N3E.
                      'Tetrade name': '-3_min'
                      }   
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_minus_3_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\\" + Tetrade_minus_3_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_minus_3_min, Deletions, Genome, Path_for_output)
@@ -457,7 +469,7 @@ Tetrade_0_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_18_S98_edt_N3E.wig",
                'Tetrade name': '0_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_0_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\\" + Tetrade_0_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)  
 GCSs_caller(Tetrade_0_min, Deletions, Genome, Path_for_output)
@@ -469,7 +481,7 @@ Tetrade_5_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_19_S99_edt_N3E.wig",
                'Tetrade name': '5_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_5_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\\" + Tetrade_5_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_5_min, Deletions, Genome, Path_for_output)
@@ -481,7 +493,7 @@ Tetrade_10_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_20_S100_edt_N3E.wig"
                'Tetrade name': '10_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_10_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\\" + Tetrade_10_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_10_min, Deletions, Genome, Path_for_output)
@@ -493,7 +505,7 @@ Tetrade_15_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_21_S101_edt_N3E.wig"
                'Tetrade name': '15_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_15_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\\" + Tetrade_15_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_15_min, Deletions, Genome, Path_for_output)
@@ -505,7 +517,7 @@ Tetrade_20_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_22_S102_edt_N3E.wig"
                'Tetrade name': '20_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_20_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\\" + Tetrade_20_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_20_min, Deletions, Genome, Path_for_output)
@@ -517,7 +529,7 @@ Tetrade_25_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_23_S103_edt_N3E.wig"
                'Tetrade name': '25_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_25_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\\" + Tetrade_25_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_25_min, Deletions, Genome, Path_for_output)
@@ -529,7 +541,7 @@ Tetrade_30_min={'A+IP+': pwd + "Raw_wig\\N3E\R1\+IP+Cfx\DSu_24_S104_edt_N3E.wig"
                'Tetrade name': '30_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\\" + Tetrade_30_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\\" + Tetrade_30_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_30_min, Deletions, Genome, Path_for_output)
@@ -548,7 +560,7 @@ Tetrade_minus_3_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_41_S113_edt_N3E
                      'Tetrade name': '-3_min'
                      }   
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_minus_3_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\R2\\" + Tetrade_minus_3_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_minus_3_min, Deletions, Genome, Path_for_output)
@@ -560,7 +572,7 @@ Tetrade_0_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_42_S114_edt_N3E.wig",
                'Tetrade name': '0_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_0_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\R2\\" + Tetrade_0_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)  
 GCSs_caller(Tetrade_0_min, Deletions, Genome, Path_for_output)
@@ -572,7 +584,7 @@ Tetrade_5_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_43_S115_edt_N3E.wig",
                'Tetrade name': '5_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_5_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\R2\\" + Tetrade_5_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_5_min, Deletions, Genome, Path_for_output)
@@ -584,7 +596,7 @@ Tetrade_10_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_44_S116_edt_N3E.wig"
                'Tetrade name': '10_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_10_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\R2\\" + Tetrade_10_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_10_min, Deletions, Genome, Path_for_output)
@@ -596,7 +608,7 @@ Tetrade_15_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_45_S117_edt_N3E.wig"
                'Tetrade name': '15_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_15_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\R2\\" + Tetrade_15_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_15_min, Deletions, Genome, Path_for_output)
@@ -608,7 +620,7 @@ Tetrade_20_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_46_S118_edt_N3E.wig"
                'Tetrade name': '20_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_20_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\R2\\" + Tetrade_20_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_20_min, Deletions, Genome, Path_for_output)
@@ -620,7 +632,7 @@ Tetrade_25_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_47_S119_edt_N3E.wig"
                'Tetrade name': '25_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_25_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\R2\\" + Tetrade_25_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_25_min, Deletions, Genome, Path_for_output)
@@ -632,9 +644,10 @@ Tetrade_30_min={'A+IP+': pwd + "Raw_wig\\N3E\R2\+IP+Cfx\DSu_48_S120_edt_N3E.wig"
                'Tetrade name': '30_min'
                }
 #Output folder
-Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_01\R2\\" + Tetrade_30_min['Tetrade name'] + "\\"
+Path_for_output=pwd + "GCSs_analysis\GCSs_calling_0_05\R2\\" + Tetrade_30_min['Tetrade name'] + "\\"
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_30_min, Deletions, Genome, Path_for_output)
+
 
 print('Script ended its work succesfully!')

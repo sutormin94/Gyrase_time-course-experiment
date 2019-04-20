@@ -31,7 +31,7 @@ from fourier import *
 #Folder with WIG files (initial normalization, smoothing, filtering).
 WIG_input_NSF="F:\Gyrase_time-course_experiment\WIG_files\Raw_data\-IP+Cfx_R1\\"
 #Folder with WIG files (additional normalization on neutral region).
-WIG_input_NN="F:\Gyrase_time-course_experiment\WIG_files"
+WIG_input_NN="F:\Gyrase_time-course_experiment\WIG_files\\"
 #Deletions data.
 Deletions="C:\Sutor\science\DNA-gyrase\scripts\Gyrase_Topo-seq\Additional_genome_features\Deletions_w3110_G_Mu_SGS.broadPeak"
 #Output folder for NSF data.
@@ -1286,3 +1286,184 @@ def calc_repl_rate():
     return
 
 #calc_repl_rate()
+
+
+#######
+#Compare smoothing by sliding window of different width with Fourier filtration.
+#######
+
+def Window_vs_Fourier(wig_in_raw, wig_in_NS, wig_in_ff, del_path, path_out):
+    #Read deletions info.
+    deletions=deletions_info(del_path)
+    #Read data raw.
+    wig_data_RAW=wig_parsing(wig_in_raw) 
+    #Read data NS.
+    wig_data_NS=wig_parsing(wig_in_NS) 
+    #Read data FF.
+    wig_data_FF=wig_parsing(wig_in_ff)        
+    
+    #Smooth normalized coverage.
+    print("Samples are smoothing...")
+    windows=[5000, 10000, 50000, 100000]
+    wig_data_NS_sm=[]
+    i=0
+    for win_width in windows:
+        print("Now sample " + str(i+1) + " out of " + str(len(windows)) + " is smoothing...")
+        sample_sm=Smoothing(wig_data_NS, deletions, win_width)
+        wig_data_NS_sm.append(sample_sm)
+        i+=1   
+    wig_data_RAW_sm=[]
+    i=0
+    for win_width in windows:
+        print("Now sample " + str(i+1) + " out of " + str(len(windows)) + " is smoothing...")
+        sample_sm=Smoothing(wig_data_RAW, deletions, win_width)
+        wig_data_RAW_sm.append(sample_sm)
+        i+=1  
+    
+    #Plot raw data, NS data, FF data.
+    X=np.arange(0,len(wig_data_NS))
+    ori_position=int((3712059+3711828)/2)
+    dif_position=int((1593613+1593585)/2)     
+    #Some hack to avoid some bug in matplotlib (OverflowError: In draw_path: Exceeded cell block limit)
+    #See: https://stackoverflow.com/questions/37470734/matplotlib-giving-error-overflowerror-in-draw-path-exceeded-cell-block-limit
+    print("Sample is plotting...")
+    mpl.rcParams['agg.path.chunksize']=10000
+    plt.figure(figsize=(16, 8), dpi=100)
+    plt.suptitle("Methods for coverage smoothing comparision", fontsize=20)
+    plot1=plt.subplot()    
+    
+    plot1.plot(X, wig_data_RAW, '--', label='Raw coverage', color='#550000', linewidth=0.2)
+    plot1.plot(X, wig_data_NS, '--', label='Coverage NS W1kb', color='#801515', linewidth=0.5)
+    plot1.plot(X, wig_data_FF, '--', label='Coverge NS W1kb FF20', color='#D17E7E', linewidth=1)
+    plot1.plot(X, wig_data_NS_sm[0], '--', label='Coverage NS W5kb', color='#490029', linewidth=1)
+    plot1.plot(X, wig_data_NS_sm[1], '--', label='Coverage NS W10kb', color='#69073E', linewidth=1)
+    plot1.plot(X, wig_data_NS_sm[2], '--', label='Coverage NS W50kb', color='#882D60', linewidth=1)
+    plot1.plot(X, wig_data_NS_sm[3], '--', label='Coverage NS W100kb', color='#A8658B', linewidth=1)    
+    plot1.plot(X, wig_data_RAW_sm[0], '--', label='Coverage RAW W5kb', color='#490029', linewidth=1)
+    plot1.plot(X, wig_data_RAW_sm[1], '--', label='Coverage RAW W10kb', color='#69073E', linewidth=1)
+    plot1.plot(X, wig_data_RAW_sm[2], '--', label='Coverage RAW W50kb', color='#882D60', linewidth=1)
+    plot1.plot(X, wig_data_RAW_sm[3], '--', label='Coverage RAW W100kb', color='#A8658B', linewidth=1)    
+    
+    plot1.set_xticks([0,500000,1000000,1500000,2000000,2500000,3000000,3500000, 4000000,4500000], minor=False)
+    plot1.set_xticklabels([0, '500', '1000', '1500', '2000', '2500', '3000', '3500', '4000', '4500'], minor=False)
+    plot1.set_xticks([dif_position, ori_position], minor=True)
+    plot1.set_xticklabels(['dif', 'Ori'], va='top', minor=True)
+    plot1.tick_params(axis='x', which='minor', direction='in', pad=-22, labelsize=17)
+    #plot1.set_ylim(0.6, 2)
+    plot1.tick_params(axis='both', which='major', direction='out', labelsize=17)
+    #Mark origin
+    #plot1.annotate('', xytext=(ori_position, 0.7), xy=(ori_position, 0.8), arrowprops=dict(arrowstyle='->', facecolor='green'), color='black', weight="bold", size=15)
+    plot1.set_xlabel('Genome position, nt', size=17)
+    plot1.set_ylabel('Coverage depth smoothed', size=17)
+    plot1.legend(loc='upper left')
+    plt.show()
+    plt.savefig(path_out  + "Figures\SW_vs_FF\\" + "-IP+Cfx_R1_30min_RAW_RAWW_NS_NSW_FF_copm.png", dpi=300, figsize=(16, 8))
+    plt.close()     
+    return
+
+#Window_vs_Fourier(WIG_input_NN+'Raw_data\-IP+Cfx_R1\\7_DSu_16_S96_edt_for_rev_depth.wig', WIG_input_NN+'NS\-IP+Cfx_R1\\7_-IP+Cfx_R1_normalized_smoothed_1000bp.wig',
+#                  WIG_input_NN+'NSF\-IP+Cfx_R1\\7_-IP+Cfx_R1_normalized_smoothed_1000bp_filtered_20fh.wig', Deletions, Output_directory)
+
+#######
+#Calculates ratio between neutral region coverage and coverage at Ori.
+#######
+
+def calc_ratio(wig_ar):
+    ori_position=int((3712059+3711828)/2)
+    cov_neutral=np.mean(wig_ar[0:2000000])
+    cov_ori=wig_ar[ori_position]
+    rep_ratio=cov_ori/cov_neutral
+    return rep_ratio
+
+
+#######
+#Calculate fraction of cells undergo replication.
+#######
+
+def Frac_of_rep(wig_in_raw_dir_R1, wig_in_raw_dir_R2, del_path, path_out):
+    #Read deletions info.
+    deletions=deletions_info(del_path)
+    #Read data raw R1.
+    wig_data_RAW_R1=read_wig_files(wig_in_raw_dir_R1)   
+    #Read data raw R2.
+    wig_data_RAW_R2=read_wig_files(wig_in_raw_dir_R2)     
+    
+    #Smooth normalized coverage.
+    print("Samples are smoothing...")
+    windows=[1000, 5000, 10000]
+    wig_data_RAW_sm_R1=[]
+    wig_data_RAW_sm_R2=[]
+    for win_width in windows:
+        some_window_width_R1=[]
+        some_window_width_R2=[]
+        for i in range(len(wig_data_RAW_R1)):
+            print("Now sample " + str(i+1) + " out of " + str(len(wig_data_RAW_R1)) + " is smoothing...")
+            sample_sm_R1=Smoothing(wig_data_RAW_R1[i], deletions, win_width)
+            some_window_width_R1.append(sample_sm_R1)  
+            sample_sm_R2=Smoothing(wig_data_RAW_R2[i], deletions, win_width)
+            some_window_width_R2.append(sample_sm_R2)              
+        wig_data_RAW_sm_R1.append(some_window_width_R1)
+        wig_data_RAW_sm_R2.append(some_window_width_R2)
+    
+    #Calculate Ori to Neutral region coverage ratio.
+    #NS smoothed additionally ratios.
+    NS_sm_ratios_R1=[]
+    NS_sm_ratios_R2=[]
+    for i in range(len(wig_data_RAW_sm_R1)):
+        win_width_ratios_R1=[]
+        win_width_ratios_R2=[]
+        for j in range(len(wig_data_RAW_sm_R1[i])):
+            time_point_ratio_R1=calc_ratio(wig_data_RAW_sm_R1[i][j])
+            win_width_ratios_R1.append(time_point_ratio_R1)
+            time_point_ratio_R2=calc_ratio(wig_data_RAW_sm_R2[i][j])
+            win_width_ratios_R2.append(time_point_ratio_R2)            
+        NS_sm_ratios_R1.append(win_width_ratios_R1)
+        NS_sm_ratios_R2.append(win_width_ratios_R2)
+        
+    
+    #Plot fraction of cells undergo replication.
+    X=np.arange(0,8)  
+    print("Sample is plotting...")
+    plt.figure(figsize=(10, 7), dpi=100)
+    plt.suptitle("Ratio of cells undergo replication", fontsize=20)
+    plot1=plt.subplot()
+    plot1.plot(X, NS_sm_ratios_R1[0], ':', label='Raw W1kb R1', color='black', linewidth=1)
+    plot1.plot(X, NS_sm_ratios_R1[1], ':', label='RAW W5kb R1', color='#69073E', linewidth=1)
+    plot1.plot(X, NS_sm_ratios_R1[2], ':', label='RAW W10kb R1', color='#D17E7E', linewidth=1)
+    plot1.plot(X, NS_sm_ratios_R2[0], '-', label='RAW W1kb R2', color='black', linewidth=1)
+    plot1.plot(X, NS_sm_ratios_R2[1], '-', label='RAW W5kb R2', color='#69073E', linewidth=1)
+    plot1.plot(X, NS_sm_ratios_R2[2], '-', label='RAW W10kb R2', color='#D17E7E', linewidth=1)  
+    
+    print(NS_sm_ratios_R1[0])
+    print(NS_sm_ratios_R1[1])
+    print(NS_sm_ratios_R1[2])
+    print(NS_sm_ratios_R2[0])
+    print(NS_sm_ratios_R2[1])
+    print(NS_sm_ratios_R2[2])
+    
+    plot1.set_xticks(X, minor=False)
+    plot1.set_xticklabels(['-3', '0', '5', '10', '15', '20', '25', '30'], minor=False)
+    zero_ypoint=np.mean([NS_sm_ratios_R1[0][2], NS_sm_ratios_R1[1][2], NS_sm_ratios_R1[2][2], NS_sm_ratios_R2[0][2], NS_sm_ratios_R2[1][2], NS_sm_ratios_R2[2][2]])
+    print('Zero point position: ' + str(zero_ypoint))
+    yticks_coords=[]
+    yticks_coords.append(-0.1)
+    for i in range(11):
+        yticks_coords.append(zero_ypoint + i*0.1)
+    plot1.set_yticks(yticks_coords, minor=False)
+    plot1.set_yticklabels(np.arange(-10,101,10), minor=False)
+    print(yticks_coords)
+    print(np.arange(-10,101,10))
+    #plot1.set_xticks([dif_position, ori_position], minor=True)
+    #plot1.set_xticklabels(['dif', 'Ori'], va='top', minor=True)
+    #plot1.tick_params(axis='x', which='minor', direction='in', pad=-22, labelsize=17)
+    #plot1.set_ylim(0.6, 2)
+    plot1.tick_params(axis='both', which='major', direction='out', labelsize=17)
+    plot1.set_xlabel('Time-points, min', size=17)
+    plot1.set_ylabel('Fraction of replicating cells', size=17)
+    plot1.legend(loc='upper left')
+    plt.show()
+    plt.savefig(path_out  + "Figures\Fraction_of_replicated\\" + "Frac_of_rep_R1_R2_adj.png", dpi=300, figsize=(16, 8))
+    plt.close()     
+    return
+
+Frac_of_rep(WIG_input_NN+'Raw_data\-IP+Cfx_R1\\', WIG_input_NN+'Raw_data\-IP+Cfx_R2\\', Deletions, Output_directory)
