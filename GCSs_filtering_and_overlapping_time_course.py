@@ -80,6 +80,11 @@ All_trusted_conditions_name="All_time-points_trusted_GCSs"
 plot_outpath=Replicas_path_out + "Replicas_venn\\"
 if not os.path.exists(plot_outpath):
     os.makedirs(plot_outpath)
+    
+#Outpath for emerging GCSs distributions.
+seq_plot_outpath=Replicas_path_out + "Seq_comp_GCSs\\"
+if not os.path.exists(seq_plot_outpath):
+    os.makedirs(seq_plot_outpath)
 
 
 
@@ -225,7 +230,7 @@ def ar_to_dict(dict_of_ars):
         dict_of_dicts[key]=dict_of_GCSs
     return dict_of_dicts
 
-#all_tp_trusted_dicts=ar_to_dict(all_tp_trusted)
+all_tp_trusted_dicts=ar_to_dict(all_tp_trusted)
 #print(all_tp_trusted_dicts)
 
 #######
@@ -385,6 +390,77 @@ All_trusted_GSCs_df=pd.read_csv(Replicas_path_out+All_trusted_conditions_name+'_
 #correlation_dendrogram(All_trusted_GSCs_df, 'pearson', "Dendrogram of distances between all samples of time-course\ngyrase Topo-Seq experiment (trusted GCSs)", Replicas_path_out+"Samples_correlation\\All_tc_trusted_samples_cm_pearson_dendrogram.png")
 #correlation_dendrogram(All_trusted_GSCs_df, 'kendall', "Dendrogram of distances between all samples of time-course\ngyrase Topo-Seq experiment (trusted GCSs)", Replicas_path_out+"Samples_correlation\\All_tc_trusted_samples_cm_kendall_dendrogram.png")
 
+ 
+#########
+##Sequentially compare trusted GCSs of time-points.
+######### 
+
+#Compare two dects of GCSs.
+def compare_two_dicts(GCSs_dict_1, GSCs_dict_2):
+    common_GCSs={}
+    new_GCSs={}
+    for key, GCS in GSCs_dict_2.items():
+        if key in GCSs_dict_1:
+            common_GCSs[key]=GCS
+        else:
+            new_GCSs[key]=GCS
+    return common_GCSs, new_GCSs
+
+#Convert one dict to two ars.
+def dict_to_ars(dictionary):
+    ar_keys=[]
+    ar_values=[]
+    for key, value in dictionary.items():
+        ar_keys.append(key)
+        ar_values.append(value)
+    return ar_keys, ar_values
+
+#Sequentially compare time-points.
+def compare_trusted_GSCs_dicts(dict_of_dicts, path_out):
+    names_ar=[]
+    for key, gcss_dict in dict_of_dicts.items():
+        names_ar.append(key)
+    print(names_ar)
+    
+    New_GCSs_ar_dict={}
+    for i in range(len(names_ar)-1):
+        common_GCSs, new_GCSs=compare_two_dicts(dict_of_dicts[names_ar[i]], dict_of_dicts[names_ar[i+1]])
+        coordinates_ar, N3E_ar=dict_to_ars(new_GCSs)
+        New_GCSs_ar_dict[names_ar[i+1]+'_'+names_ar[i]]=coordinates_ar
+        print(names_ar[i+1], names_ar[i], len(new_GCSs))
+    
+    #Parameters
+    genome_len=4647454
+    bins=np.linspace(0,genome_len,1001)
+    ticks1=[0, 500000, 1000000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000, 4500000]
+    xticknames1=['', '500', '1000', '1500', '2000', '2500', '3000', '3500', '4000', '4500']
+    colors=['#7FCE79', '#BAE85C', '#ff878b', '#8991ff', '#ac5eff', '#50b3ff', '#ffd75e']
+    plot_names=['plot1', 'plot2', 'plot3', 'plot4', 'plot5', 'plot6', 'plot7']
+    Y_labels=['0min\\\n-3min', '5min\\\n0min', '10min\\\n5min', '15min\\\n10min', '20min\\\n15min', '25min\\\n20min', '30min\\\n25min']
+    yter=1592477
+    yori=3711828
+    #GCSs data plotting.
+    fig, plot_names=plt.subplots(7,1,figsize=(11,15), dpi=100)
+    i=0
+    Histo_comp_dict={} #Will contain computed histogramm data (bins and values)
+    for key, value in New_GCSs_ar_dict.items():
+        plot_names[i].set_xlim(0, genome_len)
+        plot_names[i].set_xticks(ticks1, minor=False)
+        plot_names[i].set_xticks([yter, yori], minor=True)
+        plot_names[i].set_xticklabels(xticknames1)
+        plt.setp(plot_names[i].set_xticklabels(xticknames1), rotation=0, fontsize=14)
+        plot_names[i].locator_params(axis='y', nbins=6)
+        plot_names[i].tick_params(axis='x', which='major', labelsize=19)
+        Histo_comp_dict[key]=plot_names[i].hist(value, bins, facecolor=colors[i], alpha=0.7, linewidth=0.1, edgecolor='black') #Plot histo and save computed histogramm data (bins and values)
+        plot_names[i].tick_params(axis='y', which='major', pad=7, labelsize=15)
+        plot_names[i].set_ylabel(Y_labels[i], size=22, labelpad=8, rotation=90)
+        i+=1
+    plt.tight_layout()
+    fig.savefig(path_out+"New_trusted_GCSs_time-course_1000_bins.png", figsize=(11,15), dpi=400)
+    plt.close()
+    return
+
+compare_trusted_GSCs_dicts(all_tp_trusted_dicts, seq_plot_outpath)
  
 print('Script ended its work succesfully!') 
  
