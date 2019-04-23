@@ -14,9 +14,14 @@
 
 import os
 import matplotlib.pyplot as plt
-import collections
 from matplotlib_venn import venn2, venn3, venn3_circles
+from matplotlib import cm as cm
+import collections
+from collections import OrderedDict
 import numpy as np
+import pandas as pd
+from pandas import DataFrame
+from scipy.cluster import hierarchy as hc
 
 #######
 #Variables to be defined.
@@ -25,57 +30,62 @@ import numpy as np
 print('Variables to be defined:')
 
 #Path to the working directory
-pwd="/data/Gyrase/Data_preparation/"
+pwd="C:\Sutor\science\DNA-gyrase\Results\E_coli_synch_time-course_Topo-Seq\Seq_results\GCSs_analysis\GCSs_calling_0_01\\"
 
 #Input data
-path_to_cfx_replicas={'Cfx_1': pwd + "Cfx_10mkM/GCSs_calling_0_05/Cfx_1/Cfx_1_raw_GCSs_called.txt",
-                      'Cfx_2': pwd + "Cfx_10mkM/GCSs_calling_0_05/Cfx_2/Cfx_2_raw_GCSs_called.txt",
-                      'Cfx_3': pwd + "Cfx_10mkM/GCSs_calling_0_05/Cfx_3/Cfx_3_raw_GCSs_called.txt"}
-path_to_rifcfx_replicas={'RifCfx_1': pwd + "RifCfx/GCSs_calling_0_05_Un/RifCfx_1/RifCfx_1_raw_GCSs_called.txt",
-                         'RifCfx_2':  pwd + "RifCfx/GCSs_calling_0_05_Un/RifCfx_2/RifCfx_2_raw_GCSs_called.txt",
-                      'RifCfx_3':  pwd + "RifCfx/GCSs_calling_0_05_Un/RifCfx_3/RifCfx_3_raw_GCSs_called.txt"}
-path_to_microcin_replicas={'Micro_1':  pwd + "Micro/GCSs_calling_0_05/Micro_1/Micro_1_raw_GCSs_called.txt",
-                           'Micro_2': pwd + "Micro/GCSs_calling_0_05/Micro_2/Micro_2_raw_GCSs_called.txt",
-                      'Micro_3': pwd + "Micro/GCSs_calling_0_05/Micro_3/Micro_3_raw_GCSs_called.txt"}
-path_to_oxo_replicas={'Oxo_1': pwd + "Oxo/GCSs_calling_0_05/Oxo_1/Oxo_1_raw_GCSs_called.txt",
-                      'Oxo_2': pwd + "Oxo/GCSs_calling_0_05/Oxo_2/Oxo_2_raw_GCSs_called.txt",
-                      'Oxo_3': pwd + "Oxo/GCSs_calling_0_05/Oxo_3/Oxo_3_raw_GCSs_called.txt"}
+path_to_tp_replicas={'-3_min' : {'-3_min_R1': pwd + "R1\\NN\\-3_min\\-3_min_raw_GCSs_called.txt",
+                                      '-3_min_R2': pwd + "R2\\NN\\-3_min\\-3_min_raw_GCSs_called.txt"},
+                          '0_min' : {'0_min_R1': pwd + "R1\\NN\\0_min\\0_min_raw_GCSs_called.txt",
+                                     '0_min_R2': pwd + "R2\\NN\\0_min\\0_min_raw_GCSs_called.txt"},
+                          '5_min' : {'5_min_R1': pwd + "R1\\NN\\5_min\\5_min_raw_GCSs_called.txt",
+                                     '5_min_R2': pwd + "R2\\NN\\5_min\\5_min_raw_GCSs_called.txt"},
+                          '10_min' : {'10_min_R1': pwd + "R1\\NN\\10_min\\10_min_raw_GCSs_called.txt",
+                                      '10_min_R2': pwd + "R2\\NN\\10_min\\10_min_raw_GCSs_called.txt"},
+                          '15_min' : {'15_min_R1': pwd + "R1\\NN\\15_min\\15_min_raw_GCSs_called.txt",
+                                      '15_min_R2': pwd + "R2\\NN\\15_min\\15_min_raw_GCSs_called.txt"},
+                          '20_min' : {'20_min_R1': pwd + "R1\\NN\\20_min\\20_min_raw_GCSs_called.txt",
+                                      '20_min_R2': pwd + "R2\\NN\\20_min\\20_min_raw_GCSs_called.txt"},
+                          '25_min' : {'25_min_R1': pwd + "R1\\NN\\25_min\\25_min_raw_GCSs_called.txt",
+                                      '25_min_R2': pwd + "R2\\NN\\25_min\\25_min_raw_GCSs_called.txt"},
+                          '30_min' : {'30_min_R1': pwd + "R1\\NN\\30_min\\30_min_raw_GCSs_called.txt",
+                                      '30_min_R2': pwd + "R2\\NN\\30_min\\30_min_raw_GCSs_called.txt"}}
+
 #Input data in one dict (for one output table contains all replices and raw GCSs)
-path_to_replicas={'Cfx_1': pwd + "Cfx_10mkM/GCSs_calling_0_05/Cfx_1/Cfx_1_raw_GCSs_called.txt",
-                  'Cfx_2': pwd + "Cfx_10mkM/GCSs_calling_0_05/Cfx_2/Cfx_2_raw_GCSs_called.txt",
-                      'Cfx_3': pwd + "Cfx_10mkM/GCSs_calling_0_05/Cfx_3/Cfx_3_raw_GCSs_called.txt",
-                      'RifCfx_1': pwd + "RifCfx/GCSs_calling_0_05_Un/RifCfx_1/RifCfx_1_raw_GCSs_called.txt",
-                      'RifCfx_2':  pwd + "RifCfx/GCSs_calling_0_05_Un/RifCfx_2/RifCfx_2_raw_GCSs_called.txt",
-                      'RifCfx_3':  pwd + "RifCfx/GCSs_calling_0_05_Un/RifCfx_3/RifCfx_3_raw_GCSs_called.txt",
-                      'Micro_1':  pwd + "Micro/GCSs_calling_0_05/Micro_1/Micro_1_raw_GCSs_called.txt",
-                      'Micro_2': pwd + "Micro/GCSs_calling_0_05/Micro_2/Micro_2_raw_GCSs_called.txt",
-                      'Micro_3': pwd + "Micro/GCSs_calling_0_05/Micro_3/Micro_3_raw_GCSs_called.txt",
-                      'Oxo_1': pwd + "Oxo/GCSs_calling_0_05/Oxo_1/Oxo_1_raw_GCSs_called.txt",
-                      'Oxo_2': pwd + "Oxo/GCSs_calling_0_05/Oxo_2/Oxo_2_raw_GCSs_called.txt",
-                      'Oxo_3': pwd + "Oxo/GCSs_calling_0_05/Oxo_3/Oxo_3_raw_GCSs_called.txt"}
+path_to_replicas={'-3_min_R1': pwd + "R1\\NN\\-3_min\\-3_min_raw_GCSs_called.txt",
+                  '-3_min_R2': pwd + "R2\\NN\\-3_min\\-3_min_raw_GCSs_called.txt",
+                  '0_min_R1': pwd + "R1\\NN\\0_min\\0_min_raw_GCSs_called.txt",
+                  '0_min_R2': pwd + "R2\\NN\\0_min\\0_min_raw_GCSs_called.txt",
+                  '5_min_R1': pwd + "R1\\NN\\5_min\\5_min_raw_GCSs_called.txt",
+                  '5_min_R2': pwd + "R2\\NN\\5_min\\5_min_raw_GCSs_called.txt",
+                  '10_min_R1': pwd + "R1\\NN\\10_min\\10_min_raw_GCSs_called.txt",
+                  '10_min_R2': pwd + "R2\\NN\\10_min\\10_min_raw_GCSs_called.txt",
+                  '15_min_R1': pwd + "R1\\NN\\15_min\\15_min_raw_GCSs_called.txt",
+                  '15_min_R2': pwd + "R2\\NN\\15_min\\15_min_raw_GCSs_called.txt",
+                  '20_min_R1': pwd + "R1\\NN\\20_min\\20_min_raw_GCSs_called.txt",
+                  '20_min_R2': pwd + "R2\\NN\\20_min\\20_min_raw_GCSs_called.txt",
+                  '25_min_R1': pwd + "R1\\NN\\25_min\\25_min_raw_GCSs_called.txt",
+                  '25_min_R2': pwd + "R2\\NN\\25_min\\25_min_raw_GCSs_called.txt",
+                  '30_min_R1': pwd + "R1\\NN\\30_min\\30_min_raw_GCSs_called.txt",
+                  '30_min_R2': pwd + "R2\\NN\\30_min\\30_min_raw_GCSs_called.txt"}
 
 #Configuration of the output for the GCSs data in replicas.
-Replicas_path_out="/data/Gyrase/GCSs_sets/"
+Replicas_path_out=pwd + "GCSs_sets\\"
 if not os.path.exists(Replicas_path_out):
     os.makedirs(Replicas_path_out)
-Cfx_name="Cfx_10mkM"
-RifCfx_name="RifCfx"
-Micro_name="Micro"
-Oxo_name="Oxo"
-All_conditions_name="All_conditions_GCSs"
-#Configuration of the output for GCSs trusted.
-Cfx_path=Replicas_path_out + "Cfx_10mkM_trusted_GCSs.txt"
-RifCfx_path=Replicas_path_out + "RifCfx_trusted_GCSs.txt"
-Micro_path=Replicas_path_out + "Micro_trusted_GCSs.txt"
-Oxo_path=Replicas_path_out + "Oxo_trusted_GCSs.txt"
-Cfx_Micro_path=Replicas_path_out + "Cfx_10mkM_Micro_shared_trusted_GCSs.txt"
-Cfx_Oxo_path=Replicas_path_out + "Cfx_10mkM_Oxo_shared_trusted_GCSs.txt"
-Micro_Oxo_path=Replicas_path_out + "Micro_Oxo_shared_trusted_GCSs.txt"
-Cfx_Micro_Oxo_path=Replicas_path_out + "Cfx_10mkM_Micro_Oxo_shared_trusted_GCSs.txt"
-Cfx_RifCfx_shared_GCSs_path=Replicas_path_out + "Cfx_10mkM_RifCfx_shared_trusted_GCSs.txt"
-#Outpath for Venn diagrams.
-plot_outpath=Replicas_path_out
 
+All_conditions_name="All_time-points_GCSs"
+All_trusted_conditions_name="All_time-points_trusted_GCSs"
+
+#Outpath for Venn diagrams.
+plot_outpath=Replicas_path_out + "Replicas_venn\\"
+if not os.path.exists(plot_outpath):
+    os.makedirs(plot_outpath)
+
+
+
+#########
+##Pars GCSs files, combine into one dataframe and write table contains all GCSs of all replicas of all time-points.
+#########
 #######
 #Parsing raw GCSs coordinates, returns dictionary - GCSs_coordinate:N3E.
 #######
@@ -125,29 +135,31 @@ def combine_replicates(replicas_dict, path_out, name):
     #Sorting the list of dictionary keys.
     GCSs_replicas_dict_sorted=collections.OrderedDict(sorted(GCSs_replicas_dict.items()))
     #Writes merged GCSs data
-    fileout=open(path_out + name + '_GCSs_replicates.txt', 'w')
+    #fileout=open(path_out + name + '_GCSs_replicates.txt', 'w')
     #Header
-    fileout.write('GCSs_coordinate\t')
-    for i in names_ar:
-        fileout.write(str(i) + '_N3E\t')
-    fileout.write('\n')
+    #fileout.write('GCSs_coordinate\t')
+    #for i in names_ar:
+    #    fileout.write(str(i) + '_N3E\t')
+    #fileout.write('\n')
     #Body of the table
-    for k, v in GCSs_replicas_dict_sorted.items():
-        fileout.write(str(k) + '\t')
-        for i in GCSs_replicas_dict_sorted[k]:
-            fileout.write(str(i) + '\t')
-        fileout.write('\n')
-    fileout.close()
-    return GCSs_replicas_dict
+    #for k, v in GCSs_replicas_dict_sorted.items():
+    #    fileout.write(str(k) + '\t')
+    #    for i in GCSs_replicas_dict_sorted[k]:
+    #        fileout.write(str(i) + '\t')
+    #    fileout.write('\n')
+    #fileout.close()
+    return GCSs_replicas_dict, names_ar
  
-#Prepares GCSs table for all conditions
-combine_replicates(path_to_replicas, Replicas_path_out, All_conditions_name)      
+#Prepares GCSs table for all time-points and replicas.
+All_replicas_dict_of_ars, names_ar=combine_replicates(path_to_replicas, Replicas_path_out, All_conditions_name)      
 
-#######
-#Returns only trusted GCSs - observed at least 2 times within 3 biological replicates.
-#Data organization: 1. coordinate of GCSs, 2.-4. N3E values for biological replicates 1-3
-#######
 
+#########
+##Returns only trusted GCSs - observed in both biological replicas.
+##Data organization: 1. coordinate of GCSs, 2.-3. N3E values for biological replicates 1-2
+#########
+
+#Check if GCS is trusted.
 def trusted(ar):
     av_height=0
     ind=0
@@ -160,6 +172,7 @@ def trusted(ar):
     else:
         return "No signal"
 
+#Iterate over GSCs check if GCS is trusted.
 def trusted_GCSs_calling(GCSs_dictionary):
     ar=[]
     for k, v in GCSs_dictionary.items():
@@ -167,22 +180,111 @@ def trusted_GCSs_calling(GCSs_dictionary):
             ar.append([k, trusted(v)])
     return ar
 
-def replicas_comb_trust_wrapper(replicas_dict, path_out, name):
-    print('Now working with: ' + str(name))
-    cur_GCSs_dict=combine_replicates(replicas_dict, path_out, name)
-    cur_GCSs_trusted=trusted_GCSs_calling(cur_GCSs_dict)
-    print('Number of trusted GCSs for ' + str(name) + ' : ' + str(len(cur_GCSs_trusted)))
-    return cur_GCSs_trusted
+#Read files, assemble into one dataframe, check if GCSs are trusted.
+def replicas_comb_trust_wrapper(dict_of_replicas_dict, path_out):
+    dict_of_trusted_ars={}
+    for name, replicas_dict in dict_of_replicas_dict.items():
+        print('Now working with: ' + str(name))
+        cur_GCSs_dict=combine_replicates(replicas_dict, path_out, name)[0]
+        cur_GCSs_trusted=trusted_GCSs_calling(cur_GCSs_dict)
+        print('Number of trusted GCSs for ' + str(name) + ' : ' + str(len(cur_GCSs_trusted)))
+        print('Fraction of trusted GCSs for ' + str(name) + ' : ' + str(float(len(cur_GCSs_trusted))/len(cur_GCSs_dict)))
+        dict_of_trusted_ars[name]=cur_GCSs_trusted
+    return dict_of_trusted_ars
 
-Cfx=replicas_comb_trust_wrapper(path_to_cfx_replicas, Replicas_path_out, Cfx_name)
-RifCfx=replicas_comb_trust_wrapper(path_to_rifcfx_replicas, Replicas_path_out, RifCfx_name)
-Micro=replicas_comb_trust_wrapper(path_to_microcin_replicas, Replicas_path_out, Micro_name)
-Oxo=replicas_comb_trust_wrapper(path_to_oxo_replicas, Replicas_path_out, Oxo_name)
+all_tp_trusted=replicas_comb_trust_wrapper(path_to_tp_replicas, Replicas_path_out)
 
-Antibs_GCSs_sets=[Cfx, RifCfx, Micro, Oxo]
+#Write trusted GSCs data.
+def write_GCSs_file(dict_of_ars, path_out):
+    for k, v in dict_of_ars.items(): #Iterates lists to be written
+        v.sort(key=lambda tup: tup[0])  #Sorting lists by the zero elements of the sublists they consist of 
+        fileout=open(path_out + k + '_GCSs_trusted.txt', 'w')
+        fileout.write('GCSs_coordinate\tN3E\n')
+        for i in range(len(v)):
+            fileout.write(str(v[i][0]) + '\t' + str(v[i][1]) + '\n')
+        fileout.close()
+    return
+
+#write_GCSs_file(all_tp_trusted, Replicas_path_out)
+
+#########
+##Assemble ars of trusted GCSs into one dataframe.
+#########
+#######
+#Convert dictionary of arrays into dictionary of dictionaries.
+#######
+
+#print(all_tp_trusted)
+
+def ar_to_dict(dict_of_ars):
+    dict_of_dicts={}
+    for key, ar in dict_of_ars.items():
+        dict_of_GCSs={}
+        for gcs in ar:
+            dict_of_GCSs[gcs[0]]=gcs[1]
+        dict_of_dicts[key]=dict_of_GCSs
+    return dict_of_dicts
+
+#all_tp_trusted_dicts=ar_to_dict(all_tp_trusted)
+#print(all_tp_trusted_dicts)
 
 #######
-#GCSs shared between pairs of antibiotics - Cfx, Micro and Oxo and between Cfx and RifCfx.
+#Combine dictionaries of trusted GCSs into one dataframe and write it down.
+#######
+
+def combine_trusted(dict_of_dicts, path_out, name):
+    #Merges a range of replicates
+    GCSs_replicas_dict={}
+    names_ar=[]
+    for key, value in dict_of_dicts.items(): #Iterates dicts of trusted GCSs
+        names_ar.append(key)
+        Trusted_GCSs_dict=value
+        for k, v in Trusted_GCSs_dict.items(): #Iterates trusted GCSs
+            #Table filling process initiation
+            if len(names_ar)==1:
+                GCSs_replicas_dict[k]=[v]
+            #Table filling process continuing (the table already contains at least one GCSs set)
+            else:
+                #If GCSs is already in the table
+                if k in GCSs_replicas_dict:
+                    GCSs_replicas_dict[k].append(v)
+                #If this is the first occurrence of the element in a NON empty table.
+                else:
+                    add_el=[]
+                    for j in range(len(names_ar)-1):
+                        add_el.append(0)
+                    add_el.append(v)
+                    GCSs_replicas_dict[k]=add_el
+        #If table body line contains less elements than header does, hence add zero.
+        for k, v in GCSs_replicas_dict.items():
+            if len(v)<len(names_ar):
+                GCSs_replicas_dict[k].append(0)
+    #Sorting the list of dictionary keys.
+    GCSs_replicas_dict_sorted=collections.OrderedDict(sorted(GCSs_replicas_dict.items()))
+    #Writes merged trusted GCSs data
+    #fileout=open(path_out + name + '_trusted_GCSs.txt', 'w')
+    #Header
+    #fileout.write('GCSs_coordinate\t')
+    #for i in names_ar:
+    #    fileout.write(str(i) + '_N3E\t')
+    #fileout.write('\n')
+    #Body of the table
+    #for k, v in GCSs_replicas_dict_sorted.items():
+    #    fileout.write(str(k) + '\t')
+    #    for i in GCSs_replicas_dict_sorted[k]:
+    #        fileout.write(str(i) + '\t')
+    #    fileout.write('\n')
+    #fileout.close()    
+    return
+
+#combine_trusted(all_tp_trusted_dicts, Replicas_path_out, All_trusted_conditions_name)
+
+
+#########
+##Make Venn diagrams for biological replicas.
+#########
+#######
+#GCSs shared between two arrays (biological replicas).
 #######
 
 def pairs_construction(ar1, ar2):
@@ -192,34 +294,6 @@ def pairs_construction(ar1, ar2):
             if ar1[i][0]==ar2[j][0]:
                 double.append([ar1[i][0], ar1[i][1], ar2[j][1]]) #GCSs coordinate, N3E_1, N3E_2 
     return double
-
-Cfx_RifCfx_shared_GCSs=pairs_construction(Cfx, RifCfx)
-print('Number of GCSs shared between Cfx and RifCfx: ' + str(len(Cfx_RifCfx_shared_GCSs)) + '\n')
-
-Cfx_Micro_shared_GCSs=pairs_construction(Cfx, Micro)
-Cfx_Oxo_shared_GCSs=pairs_construction(Cfx, Oxo)
-Micro_Oxo_shared_GCSs=pairs_construction(Micro, Oxo)
-
-print('Number of GCSs shared between Cfx and Micro: ' + str(len(Cfx_Micro_shared_GCSs)))
-print('Number of GCSs shared between Cfx and Oxo: ' + str(len(Cfx_Oxo_shared_GCSs)))
-print('Number of GCSs shared between Micro and Oxo: ' + str(len(Micro_Oxo_shared_GCSs)) + '\n')
-
-Antibs_GCSs_sets_pair_shared=[Cfx_Micro_shared_GCSs, Cfx_Oxo_shared_GCSs, Micro_Oxo_shared_GCSs]
-
-#######
-#GCSs shared between 3 antibiotics
-#######
-
-def triple_construction(ar12, ar3):
-    triple=[]
-    for i in range(len(ar12)):
-        for j in range(len(ar3)):
-            if ar12[i][0]==ar3[j][0]:
-                triple.append([ar12[i][0], ar12[i][1], ar12[i][2], ar3[j][1]]) #GCSs coordinate, N3E_1, N3E_2, N3E_3
-    return triple
-
-Cfx_Micro_Oxo_shared_GCSs=triple_construction(Cfx_Micro_shared_GCSs, Oxo)
-print('Number of GCSs shared between Cfx, Micro and Oxo: ' + str(len(Cfx_Micro_Oxo_shared_GCSs)) +'\n')
 
 #######
 #Parses replicas, overlaps lists of GCSs, output data for Venn diagram construction.
@@ -233,115 +307,84 @@ def replicates_parsing_to_list_and_overlapping(replicas_dict, name):
         for c, h in read_GCSs_file(v).items(): #Iterate GCSs.
             GCSs_dict[k].append([c, h])
     #Overlapping
-    one_two=pairs_construction(GCSs_dict[name+str(1)], GCSs_dict[name+str(2)])
-    one_three=pairs_construction(GCSs_dict[name+str(1)], GCSs_dict[name+str(3)])
-    two_three=pairs_construction(GCSs_dict[name+str(2)], GCSs_dict[name+str(3)])
-    one_two_three=triple_construction(one_two, GCSs_dict[name+str(3)])
-    #Venn input description (for 3 sets): one, two, three, one_two, one_three, two_three, one_two_three
-    venn_input=[len(GCSs_dict[name+str(1)])-len(one_two)-len(one_three)+len(one_two_three), 
-                len(GCSs_dict[name+str(2)])-len(one_two)-len(two_three)+len(one_two_three), 
-                len(one_two)-len(one_two_three), 
-                len(GCSs_dict[name+str(3)])-len(one_three)-len(two_three)+len(one_two_three),
-                len(one_three)-len(one_two_three), len(two_three)-len(one_two_three),
-                len(one_two_three)]
+    one_two=pairs_construction(GCSs_dict[name+'_R1'], GCSs_dict[name+'_R2'])
+    #Venn input description (for 2 sets): one, two, one_two
+    venn_input=[len(GCSs_dict[name+'_R1'])-len(one_two), 
+                len(GCSs_dict[name+'_R2'])-len(one_two), 
+                len(one_two)]
     return venn_input
 
-#######
-#Venn diagram represents GCSs sets overlapping.
-#description2: one, two, one_two
-#description3: one, two, one_two, three, one_three, two_three, one_two_three
-#######
-
-venn_data_2=[len(Cfx)-len(Cfx_RifCfx_shared_GCSs), len(RifCfx)-len(Cfx_RifCfx_shared_GCSs), len(Cfx_RifCfx_shared_GCSs)]
-venn_data_3=[len(Cfx)-len(Cfx_Micro_shared_GCSs)-len(Cfx_Oxo_shared_GCSs)+len(Cfx_Micro_Oxo_shared_GCSs), 
-             len(Micro)-len(Cfx_Micro_shared_GCSs)-len(Micro_Oxo_shared_GCSs)+len(Cfx_Micro_Oxo_shared_GCSs), 
-             len(Cfx_Micro_shared_GCSs)-len(Cfx_Micro_Oxo_shared_GCSs),
-             len(Oxo)-len(Cfx_Oxo_shared_GCSs)-len(Micro_Oxo_shared_GCSs)+len(Cfx_Micro_Oxo_shared_GCSs),
-             len(Cfx_Oxo_shared_GCSs)-len(Cfx_Micro_Oxo_shared_GCSs), 
-             len(Micro_Oxo_shared_GCSs)-len(Cfx_Micro_Oxo_shared_GCSs), 
-             len(Cfx_Micro_Oxo_shared_GCSs)]
-
-venn2(subsets = (venn_data_2), set_labels = ("Ciprofloxacin", "Rifampicin Ciprofloxacin"))
-plt.savefig(plot_outpath+'Cfx_RifCfx_venn.png', dpi=320)
-plt.close()
-
-print("Cfx Micro Oxo subsets volumes: " + str(venn_data_3))
-venn3(subsets = (venn_data_3), set_labels = ('Ciprofloxacin', 'Microcin B17', 'Oxolinic acid'))
-plt.savefig(plot_outpath+'Cfx_Micro_Oxo_venn.png', dpi=320)
-plt.close()
-
-venn3(subsets = (replicates_parsing_to_list_and_overlapping(path_to_cfx_replicas, 'Cfx_')), set_labels = ('Cfx_1', 'Cfx_2', 'Cfx_3'))
-plt.savefig(plot_outpath+'Cfx_replicas_venn.png', dpi=320)
-plt.close()
-
-venn3(subsets = (replicates_parsing_to_list_and_overlapping(path_to_rifcfx_replicas, 'RifCfx_')), set_labels = ('RifCfx_1', 'RifCfx_2', 'RifCfx_3'))
-plt.savefig(plot_outpath+'RifCfx_replicas_venn.png', dpi=320)
-plt.close()
-
-venn3(subsets = (replicates_parsing_to_list_and_overlapping(path_to_microcin_replicas, 'Micro_')), set_labels = ('Micro_1', 'Micro_2', 'Micro_3'))
-plt.savefig(plot_outpath+'Micro_replicas_venn.png', dpi=320)
-plt.close()
-
-venn3(subsets = (replicates_parsing_to_list_and_overlapping(path_to_oxo_replicas, 'Oxo_')), set_labels = ('Oxo_1', 'Oxo_2', 'Oxo_3'))
-plt.savefig(plot_outpath+'Oxo_replicas_venn.png', dpi=320)
-plt.close()
-
-#######
-#GCSs sets average N3E estimation.
-#######
-
-def average_height(ar):
-    av_he=0
-    for i in range(len(ar)):
-        peak_he=np.mean(ar[i][1:])
-        av_he=av_he+peak_he
-    return av_he/len(ar)
-
-print('Cfx average GCSs N3E: ' + str(average_height(Cfx)))
-print('Micro average GCSs N3E: ' + str(average_height(Micro)))
-print('Oxo average GCSs N3E: ' + str(average_height(Oxo)))
-print('Cfx and Micro average GCSs N3E: ' + str(average_height(Cfx_Micro_shared_GCSs)))
-print('Cfx and Oxo average GCSs N3E: ' + str(average_height(Cfx_Oxo_shared_GCSs)))
-print('Micro and Oxo average GCSs N3E: ' + str(average_height(Micro_Oxo_shared_GCSs)))
-print('Cfx, Micro and Oxo average GCSs N3E: ' + str(average_height(Cfx_Micro_Oxo_shared_GCSs)) + '\n')
-
-
-#######
-#Write down files with GCSs lists - trusted or shared.
-#######
-
-All_GCSs_sets={Cfx_path: Antibs_GCSs_sets[0],
-               RifCfx_path: Antibs_GCSs_sets[1],
-               Micro_path: Antibs_GCSs_sets[2],
-               Oxo_path: Antibs_GCSs_sets[3],
-               Cfx_Micro_path: Antibs_GCSs_sets_pair_shared[0],
-               Cfx_Oxo_path: Antibs_GCSs_sets_pair_shared[1],
-               Micro_Oxo_path: Antibs_GCSs_sets_pair_shared[2],
-               Cfx_Micro_Oxo_path: Cfx_Micro_Oxo_shared_GCSs}
-
-def write_GCSs_file(dictionary):
-    for k, v in dictionary.items(): #Iterates lists to be written
-        v.sort(key=lambda tup: tup[0])  #Sorting lists by the zero elements of the sublists they consist of 
-        fileout=open(k, 'w')
-        fileout.write('GCSs_coordinate\tN3E\n')
-        for i in range(len(v)):
-            fileout.write(str(v[i][0]) + '\t' + str(np.mean(v[i][1:])) + '\n')
-        fileout.close()
+def replicas_venn_wrapper(dict_of_replicas_dict, plot_outpath):
+    for name, replicas_dict in dict_of_replicas_dict.items():
+        print('Now working with: ' + str(name))
+        venn2data=replicates_parsing_to_list_and_overlapping(replicas_dict, name)
+        venn2(subsets = (venn2data), set_labels = (name+"_R1", name+"_R2"))
+        #plt.savefig(plot_outpath+name+'_R1_R2_venn.png', dpi=320)
+        plt.close()    
     return
 
-write_GCSs_file(All_GCSs_sets)
+#replicas_venn_wrapper(path_to_tp_replicas, plot_outpath)
 
 
-def write_Cfx_RifCfx_shared_GCSs(ar, path):
-    fileout=open(path, 'w')
-    fileout.write('GCSs_coordinate\tCfx_N3E\tRifCfx_N3E\n')
-    ar.sort(key=lambda tup: tup[0])
-    for i in range(len(ar)):
-        fileout.write(str(ar[i][0]) + '\t' + str(ar[i][1]) + '\t' + str(ar[i][2]) + '\n')
-    fileout.close()
+#########
+##Compute correlation matrix and draw heatmaps.
+#########
+#######
+#Construct correlation matrix between replicas.
+#######
+
+#Plot diagonal correlation matrix.
+def correlation_matrix(df, cor_method, title, outpath):
+    fig=plt.figure(figsize=(8,8), dpi=100)
+    ax1=fig.add_subplot(111)
+    cmap=cm.get_cmap('rainbow', 30)
+    cax=ax1.imshow(df.corr(method=cor_method), interpolation="nearest", cmap=cmap)
+    ax1.grid(True, which='minor', linestyle="--", linewidth=0.5, color="black")
+    plt.title(title)
+    labels=list(df)
+    ax1.set_xticks(np.arange(len(labels)))
+    ax1.set_yticks(np.arange(len(labels)))    
+    ax1.set_xticklabels(labels, fontsize=12, rotation=90)
+    ax1.set_yticklabels(labels, fontsize=12)
+    #Add colorbar, make sure to specify tick locations to match desired ticklabels
+    fig.colorbar(cax, ticks=[-0.10, -0.05, 0.00, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00])
+    plt.tight_layout()
+    plt.savefig(outpath, dpi=400, figsize=(8, 8))
+    plt.show()
     return
-    
-write_Cfx_RifCfx_shared_GCSs(Cfx_RifCfx_shared_GCSs, Cfx_RifCfx_shared_GCSs_path)
+
+#Plot dendrogram on the basis of correlation matrix.
+def correlation_dendrogram(df, cor_method, title, outpath):
+    corr_inv=1-df.corr(method=cor_method) #compute correlation and inverse to distance
+    corr_inv_condensed=hc.distance.squareform(corr_inv) #convert to condensed
+    z=hc.linkage(corr_inv_condensed, method='average')
+    dendrogram=hc.dendrogram(z, labels=corr_inv.columns, leaf_rotation=90)
+    plt.title(title)
+    plt.tight_layout()
+    plt.savefig(outpath, dpi=400, figsize=(8, 8))
+    plt.show()  
+    plt.close()
+    return
+
+#Plotting the heatmap for all replicas.
+All_replicas_df=pd.read_csv(Replicas_path_out+All_conditions_name+'_GCSs_replicates.txt', sep='\t', header=(0)).drop(labels=['GCSs_coordinate', 'Unnamed: 17'], axis='columns')
+#correlation_matrix(All_replicas_df, 'spearman', "Correlation between all samples of\ntime-course gyrase Topo-Seq experiment", Replicas_path_out+"Samples_correlation\\All_tc_samples_cm_spearman.png")
+#correlation_matrix(All_replicas_df, 'pearson', "Correlation between all samples of\ntime-course gyrase Topo-Seq experiment", Replicas_path_out+"Samples_correlation\\All_tc_samples_cm_pearson.png")
+#correlation_matrix(All_replicas_df, 'kendall', "Correlation between all samples of\ntime-course gyrase Topo-Seq experiment", Replicas_path_out+"Samples_correlation\\All_tc_samples_cm_kendall.png")
+#correlation_dendrogram(All_replicas_df, 'spearman', "Dendrogram of distances between all samples of time-course\ngyrase Topo-Seq experiment", Replicas_path_out+"Samples_correlation\\All_tc_samples_cm_spearman_dendrogram.png")
+#correlation_dendrogram(All_replicas_df, 'pearson', "Dendrogram of distances between all samples of time-course\ngyrase Topo-Seq experiment", Replicas_path_out+"Samples_correlation\\All_tc_samples_cm_pearson_dendrogram.png")
+#correlation_dendrogram(All_replicas_df, 'kendall', "Dendrogram of distances between all samples of time-course\ngyrase Topo-Seq experiment", Replicas_path_out+"Samples_correlation\\All_tc_samples_cm_kendall_dendrogram.png")
+
+
+#Plotting the heatmap for all trusted GCSs lists.
+All_trusted_GSCs_df=pd.read_csv(Replicas_path_out+All_trusted_conditions_name+'_trusted_GCSs.txt', sep='\t', header=(0)).drop(labels=['GCSs_coordinate', 'Unnamed: 9'], axis='columns')
+#correlation_matrix(All_trusted_GSCs_df, 'spearman', "Correlation between all samples of time-course\ngyrase Topo-Seq experiment (trusted GCSs)", Replicas_path_out+"Samples_correlation\\All_tc_trusted_samples_cm_spearman.png")
+#correlation_matrix(All_trusted_GSCs_df, 'pearson', "Correlation between all samples of time-course\ngyrase Topo-Seq experiment (trusted GCSs)", Replicas_path_out+"Samples_correlation\\All_tc_trusted_samples_cm_pearson.png")
+#correlation_matrix(All_trusted_GSCs_df, 'kendall', "Correlation between all samples of time-course\ngyrase Topo-Seq experiment (trusted GCSs)", Replicas_path_out+"Samples_correlation\\All_tc_trusted_samples_cm_kendall.png")
+#correlation_dendrogram(All_trusted_GSCs_df, 'spearman', "Dendrogram of distances between all samples of time-course\ngyrase Topo-Seq experiment (trusted GCSs)", Replicas_path_out+"Samples_correlation\\All_tc_trusted_samples_cm_spearman_dendrogram.png")
+#correlation_dendrogram(All_trusted_GSCs_df, 'pearson', "Dendrogram of distances between all samples of time-course\ngyrase Topo-Seq experiment (trusted GCSs)", Replicas_path_out+"Samples_correlation\\All_tc_trusted_samples_cm_pearson_dendrogram.png")
+#correlation_dendrogram(All_trusted_GSCs_df, 'kendall', "Dendrogram of distances between all samples of time-course\ngyrase Topo-Seq experiment (trusted GCSs)", Replicas_path_out+"Samples_correlation\\All_tc_trusted_samples_cm_kendall_dendrogram.png")
+
  
 print('Script ended its work succesfully!') 
  

@@ -1381,6 +1381,7 @@ def calc_ratio(wig_ar):
 #######
 
 def Frac_of_rep(wig_in_raw_dir_R1, wig_in_raw_dir_R2, del_path, path_out):
+    '''
     #Read deletions info.
     deletions=deletions_info(del_path)
     #Read data raw R1.
@@ -1419,13 +1420,24 @@ def Frac_of_rep(wig_in_raw_dir_R1, wig_in_raw_dir_R2, del_path, path_out):
             win_width_ratios_R2.append(time_point_ratio_R2)            
         NS_sm_ratios_R1.append(win_width_ratios_R1)
         NS_sm_ratios_R2.append(win_width_ratios_R2)
-        
+    '''
+    
+    #Sample is plotting...
+    NS_sm_ratios_R1=[[1.0810971233078916, 1.0116723339859484, 1.0746432048545937, 1.1593970526147852, 1.313672815046678, 1.6453463391390668, 1.87642899450788, 2.0094741195423764],
+                     [1.1168755139816495, 1.0856453615856183, 1.0908837338378339, 1.1771383965652389, 1.3285875952833743, 1.6271142527630722, 1.8680633313596464, 2.007372358057889],
+                     [1.1128374238875716, 1.0899834883812058, 1.0796765427141313, 1.1565044968741585, 1.3322937163670774, 1.630821398281644, 1.8510050702451664, 1.9882109446575125]]
+    NS_sm_ratios_R2=[[1.1583278715481657, 1.104359974303709, 1.0956745067856233, 1.2628976677706059, 1.3858047454370084, 1.5857462985250037, 1.84994207114619, 2.022672577752544],
+                     [1.1628091237712161, 1.115230195789552, 1.1013557631635666, 1.2218642720776254, 1.3906649948976513, 1.6345465113318387, 1.8752097232479301, 2.038586178173467],
+                     [1.1584063555918824, 1.1220269490727266, 1.1025915160933062, 1.2018507136460288, 1.3774946096489158, 1.6221849894704616, 1.841048088632014, 2.006613169697742]]
+    #Zero point position: 1.0908042112415093
+    #[0.9, 1.0908042112415093, 1.1908042112415094, 1.2908042112415092, 1.3908042112415093, 1.4908042112415094, 1.5908042112415093, 1.6908042112415094, 1.7908042112415092, 1.8908042112415093, 1.9908042112415094, 2.090804211241509]
+    #[-10   0  10  20  30  40  50  60  70  80  90 100]
     
     #Plot fraction of cells undergo replication.
     X=np.arange(0,8)  
     print("Sample is plotting...")
     plt.figure(figsize=(10, 7), dpi=100)
-    plt.suptitle("Ratio of cells undergo replication", fontsize=20)
+    plt.suptitle("Fraction of cells undergo replication", fontsize=20)
     plot1=plt.subplot()
     plot1.plot(X, NS_sm_ratios_R1[0], ':', label='Raw W1kb R1', color='black', linewidth=1)
     plot1.plot(X, NS_sm_ratios_R1[1], ':', label='RAW W5kb R1', color='#69073E', linewidth=1)
@@ -1434,36 +1446,28 @@ def Frac_of_rep(wig_in_raw_dir_R1, wig_in_raw_dir_R2, del_path, path_out):
     plot1.plot(X, NS_sm_ratios_R2[1], '-', label='RAW W5kb R2', color='#69073E', linewidth=1)
     plot1.plot(X, NS_sm_ratios_R2[2], '-', label='RAW W10kb R2', color='#D17E7E', linewidth=1)  
     
-    print(NS_sm_ratios_R1[0])
-    print(NS_sm_ratios_R1[1])
-    print(NS_sm_ratios_R1[2])
-    print(NS_sm_ratios_R2[0])
-    print(NS_sm_ratios_R2[1])
-    print(NS_sm_ratios_R2[2])
-    
     plot1.set_xticks(X, minor=False)
     plot1.set_xticklabels(['-3', '0', '5', '10', '15', '20', '25', '30'], minor=False)
     zero_ypoint=np.mean([NS_sm_ratios_R1[0][2], NS_sm_ratios_R1[1][2], NS_sm_ratios_R1[2][2], NS_sm_ratios_R2[0][2], NS_sm_ratios_R2[1][2], NS_sm_ratios_R2[2][2]])
     print('Zero point position: ' + str(zero_ypoint))
     yticks_coords=[]
-    yticks_coords.append(-0.1)
+    yticks_coords.append(zero_ypoint -0.1)
     for i in range(11):
         yticks_coords.append(zero_ypoint + i*0.1)
     plot1.set_yticks(yticks_coords, minor=False)
     plot1.set_yticklabels(np.arange(-10,101,10), minor=False)
     print(yticks_coords)
     print(np.arange(-10,101,10))
-    #plot1.set_xticks([dif_position, ori_position], minor=True)
-    #plot1.set_xticklabels(['dif', 'Ori'], va='top', minor=True)
-    #plot1.tick_params(axis='x', which='minor', direction='in', pad=-22, labelsize=17)
-    #plot1.set_ylim(0.6, 2)
+    plot1.set_yticks([zero_ypoint, zero_ypoint+0.95], minor=True)
+    plot1.yaxis.grid(True, which='minor', linewidth=0.4, linestyle='--', color='black')    
     plot1.tick_params(axis='both', which='major', direction='out', labelsize=17)
     plot1.set_xlabel('Time-points, min', size=17)
-    plot1.set_ylabel('Fraction of replicating cells', size=17)
-    plot1.legend(loc='upper left')
+    plot1.set_ylabel('Fraction of replicating cells, %', size=17)
+    plot1.legend(loc='upper left', fontsize=20)
     plt.show()
     plt.savefig(path_out  + "Figures\Fraction_of_replicated\\" + "Frac_of_rep_R1_R2_adj.png", dpi=300, figsize=(16, 8))
     plt.close()     
     return
 
 Frac_of_rep(WIG_input_NN+'Raw_data\-IP+Cfx_R1\\', WIG_input_NN+'Raw_data\-IP+Cfx_R2\\', Deletions, Output_directory)
+
