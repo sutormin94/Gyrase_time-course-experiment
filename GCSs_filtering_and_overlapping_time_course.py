@@ -81,20 +81,22 @@ plot_outpath=Replicas_path_out + "Replicas_venn\\"
 if not os.path.exists(plot_outpath):
     os.makedirs(plot_outpath)
     
-#Outpath for emerging GCSs distributions.
+#Outpath for emerging GCSs distributions throughout the genome.
 seq_plot_outpath=Replicas_path_out + "Seq_comp_GCSs\\"
 if not os.path.exists(seq_plot_outpath):
     os.makedirs(seq_plot_outpath)
 
-
+#Outpath for distributions of N3E.
+N3E_plot_outpath=Replicas_path_out + "N3E_dist\\"
+if not os.path.exists(N3E_plot_outpath):
+    os.makedirs(N3E_plot_outpath)
+    
 
 #########
 ##Pars GCSs files, combine into one dataframe and write table contains all GCSs of all replicas of all time-points.
 #########
-#######
-#Parsing raw GCSs coordinates, returns dictionary - GCSs_coordinate:N3E.
-#######
 
+#Parsing raw GCSs coordinates, returns dictionary - GCSs_coordinate:N3E.
 def read_GCSs_file(GCSs_file_path):
     GCSs_dict={}
     GCSs_in=open(GCSs_file_path, 'r')
@@ -105,10 +107,7 @@ def read_GCSs_file(GCSs_file_path):
     GCSs_in.close()
     return GCSs_dict
 
-#######
 #Combines replicates into one GCSs table.
-#######
-
 def combine_replicates(replicas_dict, path_out, name):
     #Merges a range of replicates
     GCSs_replicas_dict={}
@@ -215,12 +214,9 @@ def write_GCSs_file(dict_of_ars, path_out):
 #########
 ##Assemble ars of trusted GCSs into one dataframe.
 #########
-#######
+
+print(all_tp_trusted)
 #Convert dictionary of arrays into dictionary of dictionaries.
-#######
-
-#print(all_tp_trusted)
-
 def ar_to_dict(dict_of_ars):
     dict_of_dicts={}
     for key, ar in dict_of_ars.items():
@@ -233,10 +229,7 @@ def ar_to_dict(dict_of_ars):
 all_tp_trusted_dicts=ar_to_dict(all_tp_trusted)
 #print(all_tp_trusted_dicts)
 
-#######
 #Combine dictionaries of trusted GCSs into one dataframe and write it down.
-#######
-
 def combine_trusted(dict_of_dicts, path_out, name):
     #Merges a range of replicates
     GCSs_replicas_dict={}
@@ -288,10 +281,8 @@ def combine_trusted(dict_of_dicts, path_out, name):
 #########
 ##Make Venn diagrams for biological replicas.
 #########
-#######
-#GCSs shared between two arrays (biological replicas).
-#######
 
+#GCSs shared between two arrays (biological replicas).
 def pairs_construction(ar1, ar2):
     double=[]
     for i in range(len(ar1)):
@@ -300,10 +291,7 @@ def pairs_construction(ar1, ar2):
                 double.append([ar1[i][0], ar1[i][1], ar2[j][1]]) #GCSs coordinate, N3E_1, N3E_2 
     return double
 
-#######
 #Parses replicas, overlaps lists of GCSs, output data for Venn diagram construction.
-#######
-
 def replicates_parsing_to_list_and_overlapping(replicas_dict, name):
     #Parsing
     GCSs_dict={}
@@ -334,9 +322,6 @@ def replicas_venn_wrapper(dict_of_replicas_dict, plot_outpath):
 #########
 ##Compute correlation matrix and draw heatmaps.
 #########
-#######
-#Construct correlation matrix between replicas.
-#######
 
 #Plot diagonal correlation matrix.
 def correlation_matrix(df, cor_method, title, outpath):
@@ -395,15 +380,21 @@ All_trusted_GSCs_df=pd.read_csv(Replicas_path_out+All_trusted_conditions_name+'_
 ##Sequentially compare trusted GCSs of time-points.
 ######### 
 
-#Compare two dects of GCSs.
-def compare_two_dicts(GCSs_dict_1, GSCs_dict_2):
+#Compare two dicts of GCSs.
+def compare_two_dicts(GCSs_dict_1, GSCs_dict_2, luft):
     common_GCSs={}
     new_GCSs={}
     for key, GCS in GSCs_dict_2.items():
-        if key in GCSs_dict_1:
-            common_GCSs[key]=GCS
-        else:
-            new_GCSs[key]=GCS
+        luft_diap=np.arange(key-luft, key+luft+1,1).tolist()
+        if luft==0:
+            luft_diap=[key]
+        if_found=0
+        for key_luft in luft_diap:
+            if key_luft in GCSs_dict_1:
+                common_GCSs[key]=GCS
+                if_found=1
+        if if_found==0:
+            new_GCSs[key]=GCS      
     return common_GCSs, new_GCSs
 
 #Convert one dict to two ars.
@@ -422,13 +413,13 @@ def compare_trusted_GSCs_dicts(dict_of_dicts, path_out):
         names_ar.append(key)
     print(names_ar)
     
+    #Previous time-point is deduced from the following one.
     New_GCSs_ar_dict={}
     for i in range(len(names_ar)-1):
-        common_GCSs, new_GCSs=compare_two_dicts(dict_of_dicts[names_ar[i]], dict_of_dicts[names_ar[i+1]])
+        common_GCSs, new_GCSs=compare_two_dicts(dict_of_dicts[names_ar[i]], dict_of_dicts[names_ar[i+1]], 0)
         coordinates_ar, N3E_ar=dict_to_ars(new_GCSs)
         New_GCSs_ar_dict[names_ar[i+1]+'_'+names_ar[i]]=coordinates_ar
         print(names_ar[i+1], names_ar[i], len(new_GCSs))
-    
     #Parameters
     genome_len=4647454
     bins=np.linspace(0,genome_len,1001)
@@ -456,11 +447,137 @@ def compare_trusted_GSCs_dicts(dict_of_dicts, path_out):
         plot_names[i].set_ylabel(Y_labels[i], size=22, labelpad=8, rotation=90)
         i+=1
     plt.tight_layout()
-    fig.savefig(path_out+"New_trusted_GCSs_time-course_1000_bins.png", figsize=(11,15), dpi=400)
+    fig.savefig(path_out+"New_trusted_GCSs_time-course_1000_bins_luft_0bp.png", figsize=(11,15), dpi=400)
+    plt.close()
+    
+    #Two previous time-points are deduced from the following one.
+    New_GCSs_ar_dict={}
+    for i in range(len(names_ar)-2):
+        common_GCSs, new_GCSs=compare_two_dicts({**dict_of_dicts[names_ar[i]], **dict_of_dicts[names_ar[i+1]]}, dict_of_dicts[names_ar[i+2]], 3)
+        coordinates_ar, N3E_ar=dict_to_ars(new_GCSs)
+        New_GCSs_ar_dict[names_ar[i+1]+'_'+names_ar[i]]=coordinates_ar
+        print(names_ar[i+1], names_ar[i], len(new_GCSs))  
+    #Parameters
+    genome_len=4647454
+    bins=np.linspace(0,genome_len,51)
+    ticks1=[0, 500000, 1000000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000, 4500000]
+    xticknames1=['', '500', '1000', '1500', '2000', '2500', '3000', '3500', '4000', '4500']
+    colors=['#7FCE79', '#BAE85C', '#ff878b', '#8991ff', '#ac5eff', '#50b3ff']
+    plot_names=['plot1', 'plot2', 'plot3', 'plot4', 'plot5', 'plot6']
+    Y_labels=['5min\\\n0min,-3min', '10min\\\n5min,0min', '15min\\\n10min,5min', '20min\\\n15min,10min', '25min\\\n20min,15min', '30min\\\n25min,20min']
+    yter=1592477
+    yori=3711828
+    #GCSs data plotting.
+    fig, plot_names=plt.subplots(6,1,figsize=(11,14), dpi=100)
+    i=0
+    Histo_comp_dict={} #Will contain computed histogramm data (bins and values)
+    for key, value in New_GCSs_ar_dict.items():
+        plot_names[i].set_xlim(0, genome_len)
+        plot_names[i].set_xticks(ticks1, minor=False)
+        plot_names[i].set_xticks([yter, yori], minor=True)
+        plot_names[i].set_xticklabels(xticknames1)
+        plt.setp(plot_names[i].set_xticklabels(xticknames1), rotation=0, fontsize=14)
+        plot_names[i].locator_params(axis='y', nbins=6)
+        plot_names[i].tick_params(axis='x', which='major', labelsize=19)
+        Histo_comp_dict[key]=plot_names[i].hist(value, bins, facecolor=colors[i], alpha=0.7, linewidth=0.5, edgecolor='black') #Plot histo and save computed histogramm data (bins and values)
+        plot_names[i].tick_params(axis='y', which='major', pad=7, labelsize=15)
+        plot_names[i].set_ylabel(Y_labels[i], size=22, labelpad=8, rotation=90)
+        i+=1
+    plt.tight_layout()
+    fig.savefig(path_out+"New_trusted_GCSs_time-course_2 ded_50_bins_luft_3bp.png", figsize=(11,15), dpi=400)
     plt.close()
     return
 
 compare_trusted_GSCs_dicts(all_tp_trusted_dicts, seq_plot_outpath)
+
+########
+##Visualize N3E distributions of sets of trusted GCSs.
+########
+
+#Convert dict of ars of ars [coord, N3E] to dict of N3E ars.
+def daa_to_N3E_ars(daa):
+    dict_of_N3E={}
+    for name, ar in daa.items():
+        dict_of_N3E[name]=[]
+        for gcs in ar:
+            dict_of_N3E[name].append(gcs[1])
+    return dict_of_N3E
+dict_of_N3E_ars=daa_to_N3E_ars(all_tp_trusted)
+
+def Plot_N3E_distribution(HS_dict, plot_path):
+    #matplotlib.rc('text', usetex = True)
+    fig=plt.figure(figsize=(15,15), dpi=100)
+    #-3 min N3E
+    plot0=plt.subplot2grid((4,2),(0,0), rowspan=1, colspan=1)     
+    plot0.hist(HS_dict['-3_min'], np.linspace(0,max(HS_dict['-3_min']),51), color='#7FCE79', edgecolor='black', alpha=0.8)
+    plot0.annotate('Mean N3E='+str(round(np.mean(HS_dict['-3_min']),2)), xy=(0.60, 0.8), xycoords='axes fraction', size=15)
+    plot0.annotate('Sum N3E='+str(round(sum(HS_dict['-3_min']),2)), xy=(0.60, 0.7), xycoords='axes fraction', size=15)
+    plot0.set_xlabel('GCSs N3E', size=17)
+    plot0.set_ylabel('Number of GCSs', size=17)
+    plot0.set_title('-3_min', size=18)
+    #0 min N3E
+    plot1=plt.subplot2grid((4,2),(1,0), rowspan=1, colspan=1)     
+    plot1.hist(HS_dict['0_min'], np.linspace(0,max(HS_dict['0_min']),51), color='#7FCE79', edgecolor='black', alpha=0.8)
+    plot1.annotate('Mean N3E='+str(round(np.mean(HS_dict['0_min']),2)), xy=(0.60, 0.8), xycoords='axes fraction', size=15)
+    plot1.annotate('Sum N3E='+str(round(sum(HS_dict['0_min']),2)), xy=(0.60, 0.7), xycoords='axes fraction', size=15)
+    plot1.set_xlabel('GCSs N3E', size=17)
+    plot1.set_ylabel('Number of GCSs', size=17)
+    plot1.set_title('0_min', size=18)
+    #5 min N3E
+    plot2=plt.subplot2grid((4,2),(2,0), rowspan=1, colspan=1)     
+    plot2.hist(HS_dict['5_min'], np.linspace(0,max(HS_dict['5_min']),51), color='#BAE85C', edgecolor='black', alpha=0.8)
+    plot2.annotate('Mean N3E='+str(round(np.mean(HS_dict['5_min']),2)), xy=(0.60, 0.8), xycoords='axes fraction', size=15)
+    plot2.annotate('Sum N3E='+str(round(sum(HS_dict['5_min']),2)), xy=(0.60, 0.7), xycoords='axes fraction', size=15)
+    plot2.set_xlabel('GCSs N3E', size=17)
+    plot2.set_ylabel('Number of GCSs', size=17)
+    plot2.set_title('5_min', size=18)
+    #10 min N3E
+    plot3=plt.subplot2grid((4,2),(3,0), rowspan=1, colspan=1)     
+    plot3.hist(HS_dict['10_min'], np.linspace(0,max(HS_dict['10_min']),51), color='#BAE85C', edgecolor='black', alpha=0.8)
+    plot3.annotate('Mean N3E='+str(round(np.mean(HS_dict['10_min']),2)), xy=(0.60, 0.8), xycoords='axes fraction', size=15)
+    plot3.annotate('Sum N3E='+str(round(sum(HS_dict['10_min']),2)), xy=(0.60, 0.7), xycoords='axes fraction', size=15)
+    plot3.set_xlabel('GCSs N3E', size=17) 
+    plot3.set_ylabel('Number of GCSs', size=17) 
+    plot3.set_title('10_min', size=18)
+    #15 min N3E
+    plot4=plt.subplot2grid((4,2),(0,1), rowspan=1, colspan=1)     
+    plot4.hist(HS_dict['15_min'], np.linspace(0,max(HS_dict['15_min']),51), color='#ff878b', edgecolor='black', alpha=0.8)
+    plot4.annotate('Mean N3E='+str(round(np.mean(HS_dict['15_min']),2)),  xy=(0.60, 0.8), xycoords='axes fraction', size=15)
+    plot4.annotate('Sum N3E='+str(round(sum(HS_dict['15_min']),2)), xy=(0.60, 0.7), xycoords='axes fraction', size=15)
+    plot4.set_xlabel('GCSs N3E', size=17) 
+    plot4.set_ylabel('Number of GCSs', size=17)
+    plot4.set_title('15_min', size=18)
+    #20 min N3E
+    plot5=plt.subplot2grid((4,2),(1,1), rowspan=1, colspan=1)     
+    plot5.hist(HS_dict['20_min'], np.linspace(0,max(HS_dict['20_min']),51), color='#ff878b', edgecolor='black', alpha=0.8)
+    plot5.annotate('Mean N3E='+str(round(np.mean(HS_dict['20_min']),2)), xy=(0.60, 0.8), xycoords='axes fraction', size=15)
+    plot5.annotate('Sum N3E='+str(round(sum(HS_dict['20_min']),2)), xy=(0.60, 0.7), xycoords='axes fraction', size=15)
+    plot5.set_xlabel('GCSs N3E', size=17) 
+    plot5.set_ylabel('Number of GCSs', size=17) 
+    plot5.set_title('20_min', size=18)
+    #25 min N3E
+    plot6=plt.subplot2grid((4,2),(2,1), rowspan=1, colspan=1)     
+    plot6.hist(HS_dict['25_min'], np.linspace(0,max(HS_dict['25_min']),51), color='#8991ff', edgecolor='black', alpha=0.8)
+    plot6.annotate('Mean N3E='+str(round(np.mean(HS_dict['25_min']),2)), xy=(0.60, 0.8), xycoords='axes fraction', size=15)
+    plot6.annotate('Sum N3E='+str(round(sum(HS_dict['25_min']),2)), xy=(0.60, 0.7), xycoords='axes fraction', size=15)
+    plot6.set_xlabel('GCSs N3E', size=17) 
+    plot6.set_ylabel('Number of GCSs', size=17)
+    plot6.set_title('25_min', size=18)
+    #30 min N3E
+    plot7=plt.subplot2grid((4,2),(3,1), rowspan=1, colspan=1)     
+    plot7.hist(HS_dict['30_min'], np.linspace(0,max(HS_dict['30_min']),51), color='#8991ff', edgecolor='black', alpha=0.8)
+    plot7.annotate('Mean N3E='+str(round(np.mean(HS_dict['30_min']),2)), xy=(0.60, 0.8), xycoords='axes fraction', size=15)
+    plot7.annotate('Sum N3E='+str(round(sum(HS_dict['30_min']),2)), xy=(0.60, 0.7), xycoords='axes fraction', size=15)
+    plot7.set_xlabel('GCSs N3E', size=17) 
+    plot7.set_ylabel('Number of GCSs', size=17)
+    plot7.set_title('30_min', size=18)
+    
+    plt.tight_layout()
+    plt.savefig(plot_path + "Time-course_GCSs_N3E_distributions.png", dpi=400, figsize=(15, 15)) 
+    plt.close()    
+    return
+
+#Plot_N3E_distribution(dict_of_N3E_ars, N3E_plot_outpath)
  
 print('Script ended its work succesfully!') 
  

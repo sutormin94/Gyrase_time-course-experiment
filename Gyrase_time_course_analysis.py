@@ -28,15 +28,25 @@ from fourier import *
 #Variables to be defined.
 #######
 
+#Deletions data.
+Deletions="C:\Sutor\science\DNA-gyrase\scripts\Gyrase_Topo-seq\Additional_genome_features\Deletions_w3110_G_Mu_SGS.broadPeak"
+
+#Folder with raw WIG files.
+WIG_input_raw="F:\Gyrase_time-course_experiment\Reads_eq\WIG_files\Raw_data\\"
+#Output folder for NSF data.
+Output_directory="F:\Gyrase_time-course_experiment\Reads_eq\\"
+#Folder with WIG files contains normalized and smoothed -IP+Cfx data.
+WIG_control_NS_input="F:\Gyrase_time-course_experiment\Reads_eq\WIG_files\\NS\\"
+#Folder with WIG files contains normalized and smoothed +IP+Cfx data.
+WIG_exp_NS_input="F:\Gyrase_time-course_experiment\Reads_eq\WIG_files\\NS\\"
+
+##Reviewed untill here
+
+
 #Folder with WIG files (initial normalization, smoothing, filtering).
 WIG_input_NSF="F:\Gyrase_time-course_experiment\WIG_files\Raw_data\-IP+Cfx_R1\\"
 #Folder with WIG files (additional normalization on neutral region).
 WIG_input_NN="F:\Gyrase_time-course_experiment\WIG_files\\"
-#Deletions data.
-Deletions="C:\Sutor\science\DNA-gyrase\scripts\Gyrase_Topo-seq\Additional_genome_features\Deletions_w3110_G_Mu_SGS.broadPeak"
-#Output folder for NSF data.
-Output_directory="F:\Gyrase_time-course_experiment\\"
-
 #Folder with WIG files contains normalized and smoothed -IP+Cfx data.
 WIG_control_NS_input="F:\Gyrase_time-course_experiment\WIG_files\\NS_NN\-IP+Cfx\R1\\"
 #Folder with WIG files contains normalized, smoothed and filtered -IP+Cfx data.
@@ -166,23 +176,38 @@ def write_wig(input_array, fileout_path, flag, strain_id, n_round):
 #Wrapp functions for normalization, smoothing, filtering and plotting together.
 #######
 
-def NSF_wrapper(wig_dir, window, diap, n_round, del_path, strain_id, path_out):
+def NSF_wrapper(wig_dir, window, FF, n_round, del_path, strain_id, path_out, DS_name, ylim):
     #Read deletions info.
     deletions=deletions_info(del_path)
     #Read data.
-    wig_data=read_wig_files(wig_dir)
-    #Identify minimal coverage.
+    wig_data=read_wig_files(f'{wig_dir}\{DS_name}\\')
+    
+    #Identify minimal and maximal coverage.
     mean_coverage_ar=[]
     for sample in wig_data:
         mean_coverage_ar.append(np.mean(sample[0:2500000]))
+    print(f'Mean coverages of neutral regions:\n {mean_coverage_ar}')
     Min_mean_coverage=min(mean_coverage_ar)
-    print('Min_mean_coverage: ' + str(Min_mean_coverage))    
+    print(f'Min mean coverage: {Min_mean_coverage}')  
+    Max_mean_coverage=max(mean_coverage_ar)
+    print(f'Max mean coverage: {Max_mean_coverage}')     
+    #Plot distribution of mean coverages.
+    plt.figure(figsize=(16, 8), dpi=100)
+    plt.suptitle('Distribution of NR mean coverages', fontsize=20)
+    plot1=plt.subplot()     
+    plot1.hist(mean_coverage_ar, facecolor="green", alpha=0.7, linewidth=1, edgecolor='black')
+    plot1.annotate(f'Min cov={round(Min_mean_coverage,2)}', xy=(0.60, 0.8), xycoords='axes fraction', size=15)
+    plot1.annotate(f'Max cov={round(Max_mean_coverage,2)}', xy=(0.60, 0.7), xycoords='axes fraction', size=15)
+    plot1.set_xlabel('NR mean coverage', size=17)
+    plot1.set_ylabel('Number of samples', size=17)
+    plt.show()  
+      
     #Normalize samples coverage (add pseudocount +1).
     print("Samples are normalizing...")
     wig_data_norm=[]
     i=0
     for sample in wig_data:
-        print("Now sample " + str(i+1) + " out of " + str(len(wig_data)) + " is normalizing...")
+        print(f'Now sample {i} out of {len(wig_data)-1} is normalizing... with mean_coverage: {mean_coverage_ar[i]}')
         sample_norm=[1.0 * (x + 1) * Min_mean_coverage/mean_coverage_ar[i] for x in sample]
         wig_data_norm.append(sample_norm)
         i+=1
@@ -192,118 +217,120 @@ def NSF_wrapper(wig_dir, window, diap, n_round, del_path, strain_id, path_out):
     wig_data_norm_sm=[]
     i=0
     for sample_norm in wig_data_norm:
-        print("Now sample " + str(i+1) + " out of " + str(len(wig_data)) + " is smoothing...")
+        print(f'Now sample {i} out of {len(wig_data)-1} is smoothing...')
         sample_norm_sm=Smoothing(sample_norm, deletions, window)
         wig_data_norm_sm.append(sample_norm_sm)
         i+=1
     
-    #Data Fourier-filtration.
-    print("Samples are filtering...")
-    ff=Fourier()
-    X=np.arange(0,len(wig_data_norm_sm[0]))
-    
-    retained_d={}
-    for hnum in range(diap):
-        retained_d[int(hnum)]=None 
-    retained=list(retained_d)
-    
-    i=0
-    for sample_norm_sm in wig_data_norm_sm:
-        print("Now sample " + str(i+1) + " out of " + str(len(wig_data)) + " is filtering...")
-        ft=ff.fourier(np.array(sample_norm_sm))
-        ft_reduced=ff.reduce(ft, retained)
-        print(ft_reduced)
-        sample_norm_filtered=ff.recover(X, ft_reduced)
-        print(X[:10])
-        print(sample_norm_sm[:10])
-        print(sample_norm_filtered[:10])
-        #Plot the data.
+    #Data Fourier-filtration (optional).
+    if FF[0]=='T':
+        print('Samples are filtering...')
+        #Rank of the last harmonic to be used for reconstruction.
+        diap=FF[1]
+        ff=Fourier()
+        X=np.arange(0,len(wig_data_norm[0]))
+        #Retained harmonics.
+        retained_d={}
+        for hnum in range(diap):
+            retained_d[int(hnum)]=None 
+        retained=list(retained_d)
+        #Filtering.
+        wig_data_norm_ff=[]
+        i=0
+        for sample_norm in wig_data_norm:
+            print(f'Now sample {i} out of {len(wig_data)-1} is filtering...')
+            ft=ff.fourier(np.array(sample_norm))
+            ft_reduced=ff.reduce(ft, retained)
+            sample_norm_filtered=ff.recover(X, ft_reduced)
+            wig_data_norm_ff.append(sample_norm_filtered)
+    elif FF[0]=='F':
+        print('Fourier filtration is ommitting...')
+        
+    #Plot data.
+    if not os.path.exists(f'{path_out}Figures\\NS'):
+        os.makedirs(f'{path_out}Figures\\NS')
+    if not os.path.exists(f'{path_out}Figures\\Raw'):
+        os.makedirs(f'{path_out}Figures\\Raw')
+    if FF[0]=='T':
+        if not os.path.exists(f'{path_out}Figures\\NSF'):
+            os.makedirs(f'{path_out}Figures\\NSF') 
+    for i in range(len(wig_data)):
         #Some hack to avoid some bug in matplotlib (OverflowError: In draw_path: Exceeded cell block limit)
         #See: https://stackoverflow.com/questions/37470734/matplotlib-giving-error-overflowerror-in-draw-path-exceeded-cell-block-limit
-        print("Sample is plotting...")
-        #mpl.rcParams['agg.path.chunksize']=10000
-        #plt.figure(figsize=(16, 8), dpi=100)
-        #plt.suptitle("E. coli synchronization data filtration 1000bp sm 30h filtering", fontsize=20)
-        #plot1=plt.subplot() 
-        #plot1.plot(X, sample_norm_sm, '--', label='Original', color='#550000', linewidth=1)
-        #plot1.plot(X, sample_norm_filtered, '--', label='Filtered 30 fh', color='#D17E7E', linewidth=1)  
-        #plot1.set_xlabel('Genome position, nt', size=17)
-        #plot1.set_ylabel('Coverage depth', size=17)
-        #plot1.legend(loc='upper left')
-        #plt.show()
-        #plt.savefig(path_out + "Figures\First_glance\-IP+Cfx_R1_" + str(i) + "_1000bp_sm_30fh_filt.png", dpi=300, figsize=(16, 8))
-        #plt.close()
-        #Write the WIG files.
-        write_wig(sample_norm_sm, path_out + 'WIG_files\\NS\-IP+Cfx_R1\\' + str(i) + "_-IP+Cfx_R1_normalized_smoothed_1000bp.wig", i, strain_id, n_round)
-        write_wig(sample_norm_filtered, path_out + 'WIG_files\\NSF\-IP+Cfx_R1\\' + str(i) + "_-IP+Cfx_R1_normalized_smoothed_1000bp_filtered_20fh.wig", i, strain_id, n_round)
-        i+=1
+        print(f'Now sample {i} out of {len(wig_data)-1} is plotting...')
+        mpl.rcParams['agg.path.chunksize']=10000
+        plt.figure(figsize=(16, 8), dpi=100)
+        Xcor=np.arange(0,len(wig_data[i]))
+        plot1=plt.subplot() 
+        if FF[0]=='T': #If FF was performed.
+            plt.suptitle(f'E. coli synchronization {DS_name} data smoothing {window}bp and \n F filtering {diap}h', fontsize=20)
+            plot1.plot(Xcor, wig_data_norm[i], '-', label='Raw data N', color='black', linewidth=0.1)
+            plot1.plot(Xcor, wig_data_norm_sm[i], '--', label=f'Data NSm {window}bp', color='#ee4e4e', linewidth=1)
+            plot1.plot(Xcor, wig_data_norm_ff[i], '--', label=f'Data FF {diap}h', color='#D17E7E', linewidth=1)    
+            plot1.set_ylim(ylim[0], ylim[1])
+        elif FF[0]=='F': #If FF wasn't performed.
+            plt.suptitle(f'E. coli synchronization {DS_name} data smoothing {window}bp', fontsize=20)
+            plot1.plot(Xcor, wig_data_norm[i], '-', label='Raw data N', color='black', linewidth=0.1)
+            plot1.plot(Xcor, wig_data_norm_sm[i], '--', label=f'Data NSm {window}bp', color='#ee4e4e', linewidth=1)  
+            plot1.set_ylim(ylim[0], ylim[1])
+        plot1.set_xlabel('Genome position, nt', size=17)
+        plot1.set_ylabel('Coverage depth', size=17)
+        plot1.legend(loc='upper left', fontsize=20)
+        plt.show()
+        if FF[0]=='T':
+            plt.savefig(f'{path_out}Figures\\NSF\{DS_name}_{i}_N_{window}bp_S_{diap}h_FF.png', dpi=300, figsize=(16, 8))
+        elif FF[0]=='F':
+            plt.savefig(f'{path_out}Figures\\NS\{DS_name}_{i}_N_{window}bp_S.png', dpi=300, figsize=(16, 8))
+        plt.close()
         
+        #Raw data plotting (before N and S).
+        mpl.rcParams['agg.path.chunksize']=10000
+        plt.figure(figsize=(16, 8), dpi=100)
+        Xcor=np.arange(0,len(wig_data[i]))
+        plot1=plt.subplot() 
+        plt.suptitle(f'E. coli synchronization {DS_name} raw data', fontsize=20)
+        plot1.plot(Xcor, wig_data[i], '-', label='Raw data', color='black', linewidth=0.1)
+        plot1.annotate(f'Mean coverage NR={round(mean_coverage_ar[i],0)}', xy=(0.25, 0.95), xycoords='axes fraction', size=17)
+        plot1.set_ylim(ylim[0], ylim[1])
+        plot1.set_xlabel('Genome position, nt', size=17)
+        plot1.set_ylabel('Coverage depth', size=17)
+        plot1.legend(loc='upper left', fontsize=20)
+        plt.show()
+        plt.savefig(f'{path_out}Figures\\Raw\{DS_name}_{i}_raw.png', dpi=300, figsize=(16, 8))
+        plt.close()
         
-    
-    #Plot normalized and smoothed coverage.
-    #Some hack to avoid some bug in matplotlib (OverflowError: In draw_path: Exceeded cell block limit)
-    #See: https://stackoverflow.com/questions/37470734/matplotlib-giving-error-overflowerror-in-draw-path-exceeded-cell-block-limit
-    #print("Samples are plotting...")
-    #mpl.rcParams['agg.path.chunksize']=10000
-    #xcoord=np.arange(0,4647999)
-    #plt.figure(figsize=(16, 8), dpi=100)
-    #plt.suptitle("E. coli synchronization", fontsize=20)
-    #plot1=plt.subplot() 
-    #plot1.plot(xcoord, wig_data_norm_sm[0], '--', label='-3 min', color='#550000', linewidth=1)
-    #plot1.plot(xcoord, wig_data_norm_sm[1], '--', label='0 min', color='#801515', linewidth=1)
-    #plot1.plot(xcoord, wig_data_norm_sm[2], '--', label='5 min', color='#AA3939', linewidth=1)
-    #plot1.plot(xcoord, wig_data_norm_sm[3], '--', label='10 min', color='#D17E7E', linewidth=1)
-    #plot1.plot(xcoord, wig_data_norm_sm[4], '--', label='15 min', color='#490029', linewidth=1)
-    #plot1.plot(xcoord, wig_data_norm_sm[5], '--', label='20 min', color='#69073E', linewidth=1)
-    #plot1.plot(xcoord, wig_data_norm_sm[6], '--', label='25 min', color='#882D60', linewidth=1)
-    #plot1.plot(xcoord, wig_data_norm_sm[7], '--', label='30 min', color='#A8658B', linewidth=1)  
-    #plot1.set_xlabel('Genome position, nt', size=17)
-    #plot1.set_ylabel('Coverage depth', size=17)
-    #plot1.legend(loc='upper left')
-    #plt.show()
-    #plt.savefig(path_out + 'Replic_2_+IP+Cfx_coverage_dynamic_1000.png', dpi=300, figsize=(16, 8))
-    #plt.close()    
+    #Write the WIG files.
+    if not os.path.exists(f'{path_out}WIG_files\\N\{DS_name}'):
+        os.makedirs(f'{path_out}WIG_files\\N\{DS_name}') 
+    if not os.path.exists(f'{path_out}WIG_files\\NS\{DS_name}'):
+        os.makedirs(f'{path_out}WIG_files\\NS\{DS_name}')
+    if FF[0]=='T':
+        if not os.path.exists(f'{path_out}WIG_files\\NF\{DS_name}'):
+            os.makedirs(f'{path_out}WIG_files\\NF\{DS_name}')     
+    for i in range(len(wig_data)):
+        print(f'Now sample {i} out of {len(wig_data)-1} is writing...')
+        write_wig(wig_data_norm[i], f'{path_out}WIG_files\\N\{DS_name}\\{DS_name}_{i}_N.wig', i, strain_id, n_round)
+        write_wig(wig_data_norm_sm[i], f'{path_out}WIG_files\\NS\{DS_name}\\{DS_name}_{i}_N_{window}bp_S.wig', i, strain_id, n_round)
+        if FF[0]=='T':
+            write_wig(wig_data_norm_ff[i], f'{path_out}WIG_files\\NF\{DS_name}\\{DS_name}_{i}_N_{diap}h_FF.wig', i, strain_id, n_round)  
     return
 
-#NSF_wrapper(WIG_input_NSF, 1000, 20, 15, Deletions, "NC_007779.1_w3110_Mu", Output_directory)
+NSF_wrapper(WIG_input_raw, 1000, ['F', 20], 15, Deletions, "NC_007779.1_w3110_Mu", Output_directory, '-IP+Cfx_R1', [-50, 1350])
+NSF_wrapper(WIG_input_raw, 1000, ['F', 20], 15, Deletions, "NC_007779.1_w3110_Mu", Output_directory, '+IP+Cfx_R1', [-500, 8000])
+NSF_wrapper(WIG_input_raw, 1000, ['F', 20], 15, Deletions, "NC_007779.1_w3110_Mu", Output_directory, '-IP+Cfx_R2', [-50, 1350])
+NSF_wrapper(WIG_input_raw, 1000, ['F', 20], 15, Deletions, "NC_007779.1_w3110_Mu", Output_directory, '+IP+Cfx_R2', [-500, 8000])
+
 
 #######
-#Normalize with neutral regioin coverage (isn't influenced by replication).
+#Wrapp functions for normalization of +IP+Cfx samples by corresponding smoothed -IP+Cfx, 
+#plotting and writing the data.
 #######
 
-def norm_neutral(wig_dir, n_round, strain_id, path_out, prefix, suffix):
-    #Read data.
-    wig_data=read_wig_files(wig_dir)
-    #Identify minimal coverage.
-    mean_coverage_ar=[]
-    for sample in wig_data:
-        mean_coverage_ar.append(np.mean(sample[0:2500000]))
-    Min_mean_coverage=min(mean_coverage_ar)
-    print('Min_mean_coverage: ' + str(Min_mean_coverage))    
-    #Normalize samples coverage (add pseudocount +1).
-    print("Samples are normalizing...")
-    wig_data_norm=[]
-    i=0
-    for sample in wig_data:
-        print("Now sample " + str(i+1) + " out of " + str(len(wig_data)) + " is normalizing...")
-        sample_norm=[x * Min_mean_coverage/mean_coverage_ar[i] for x in sample]
-        wig_data_norm.append(sample_norm)
-        write_wig(sample_norm, path_out + prefix + str(i) + suffix, i, strain_id, n_round) #filtered_20fh_
-        i+=1    
-    return
-
-#norm_neutral(WIG_input_NN+"\\NS\-IP+Cfx_R1\\", 15, "NC_007779.1_w3110_Mu", Output_directory, 'WIG_files\\NS_NN\-IP+Cfx\R1\\', "_-IP+Cfx_R1_normalized_smoothed_1000bp_nn.wig")
-#norm_neutral(WIG_input_NN+"\\NSF\-IP+Cfx_R1\\", 15, "NC_007779.1_w3110_Mu", Output_directory, 'WIG_files\\NSF_NN\-IP+Cfx\R1\\', "_-IP+Cfx_R1_normalized_smoothed_1000bp_filtered_20fh_nn.wig")
-
-#######
-#Wrapp functions for normalization of +IP+Cfx samples by corresponding -IP+Cfx, plotting and writing the data.
-#######
-
-def NP_wrapper(wig_dir_control, wig_dir_exp, n_round, strain_id, path_out):
-    #Read data -Cfx+IP smoothed and filtered.
-    wig_data_controls=read_wig_files(wig_dir_control) 
-    #Read data +Cfx+IP smoothed.
-    wig_data_exp=read_wig_files(wig_dir_exp)
+def NPaired_wrapper(wig_dir_control, wig_dir_exp, n_round, strain_id, path_out, Replic):
+    #Read data -Cfx+IP smoothed or filtered.
+    wig_data_controls=read_wig_files(f'{wig_dir_control}\\-IP+Cfx_{Replic}') 
+    #Read data +Cfx+IP smoothed or not.
+    wig_data_exp=read_wig_files(f'{wig_dir_exp}\\+IP+Cfx_{Replic}')
     #Pairwise division +Cfx+IP/-Cfx+IP.
     wig_data_exp_div=[]
     for i in range(len(wig_data_controls)):
@@ -312,21 +339,26 @@ def NP_wrapper(wig_dir_control, wig_dir_exp, n_round, strain_id, path_out):
             j_pos_div=wig_data_exp[i][j]/wig_data_controls[i][j]
             exp_div.append(j_pos_div)
         wig_data_exp_div.append(exp_div)
-    #Data plotting.
+        
+    #Data plotting and writing.
+    if not os.path.exists(f'{path_out}Figures\Exp_NS_div_Cont_NS\\{Replic}'):
+        os.makedirs(f'{path_out}Figures\Exp_NS_div_Cont_NS\\{Replic}')      
+    if not os.path.exists(f'{path_out}WIG_files\Exp_NS_div_Cont_NS\\{Replic}'):
+        os.makedirs(f'{path_out}WIG_files\Exp_NS_div_Cont_NS\\{Replic}')     
     X=np.arange(0,len(wig_data_exp_div[0]))
     ori_position=int((3712059+3711828)/2)
     dif_position=int((1593613+1593585)/2)     
     time_array=['-3min', '0min', '5min', '10min', '15min', '20min', '25min', '30min']
     for i in range(len(wig_data_exp_div)):
+        print(f'Sample {i} out of {len(wig_data_exp_div)-1} is plotting...')
         #Some hack to avoid some bug in matplotlib (OverflowError: In draw_path: Exceeded cell block limit)
-        #See: https://stackoverflow.com/questions/37470734/matplotlib-giving-error-overflowerror-in-draw-path-exceeded-cell-block-limit
-        print("Sample is plotting...")
+        #See: https://stackoverflow.com/questions/37470734/matplotlib-giving-error-overflowerror-in-draw-path-exceeded-cell-block-limit        
         mpl.rcParams['agg.path.chunksize']=10000
         plt.figure(figsize=(16, 8), dpi=100)
-        plt.suptitle("E. coli synchronization data divided +IP+Cfx/-IP+Cfx", fontsize=20)
+        plt.suptitle("E. coli synchronization data +IP+Cfx/-IP+Cfx", fontsize=20)
         plot1=plt.subplot() 
-        plot1.plot(X, wig_data_exp_div[i], '-', label=time_array[i] + ' +IP+Cfx_NSF/-IP+Cfx_NSF', color='#550000', linewidth=2)
-        plot1.plot(X, np.array(wig_data_controls[i])/500, '-', label=time_array[i] + ' -IP+Cfx NSF', color='#D17E7E', linewidth=3) #NS: 600
+        plot1.plot(X, wig_data_exp_div[i], '-', label=f'{time_array[i]} +IP+Cfx_NS/-IP+Cfx_NS', color='#550000', linewidth=1)
+        plot1.plot(X, wig_data_controls[i], '-', label=f'{time_array[i]} -IP+Cfx NS', color='#D17E7E', linewidth=3) #NS: 600, 500
         plot1.set_xticks([0,500000,1000000,1500000,2000000,2500000,3000000,3500000, 4000000,4500000], minor=False)
         plot1.set_xticklabels([0, '500', '1000', '1500', '2000', '2500', '3000', '3500', '4000', '4500'], minor=False)
         plot1.set_xticks([dif_position, ori_position], minor=True)
@@ -339,12 +371,15 @@ def NP_wrapper(wig_dir_control, wig_dir_exp, n_round, strain_id, path_out):
         plot1.legend(loc='upper left', fontsize=25)
         plot1.annotate('', xytext=(ori_position, 0.0), xy=(ori_position, 0.350), arrowprops=dict(arrowstyle='->', color='green'), color='black', weight="bold", size=15) #+IP: 0, 200; -IP: 100, 200
         plt.show()
-        plt.savefig(path_out  + 'Figures\Exp_NSF_div_cont_NSF\R1\\' + time_array[i] + "_+IP+Cfx_R1_NSF_div_-IP+Cfx_R1_NSF_-IP+Cfx_R1_NSF.png", dpi=300, figsize=(16, 8))
+        plt.savefig(f'{path_out}Figures\Exp_NS_div_Cont_NS\\{Replic}\\{time_array[i]}_+IP+Cfx_{Replic}_NS_div_-IP+Cfx_{Replic}_NS_-IP+Cfx_{Replic}_NS.png', dpi=300, figsize=(16, 8))
         plt.close()
-        write_wig(wig_data_exp_div[i], path_out + "WIG_files\Exp_NS_div_cont_NSF\R1\\" + str(i) + "_+IP+Cfx_NS_div_-IP+Cfx_NSF_R1.wig", str(i) + "_+IP+Cfx_NSF/-IP+Cfx_NSF", strain_id, n_round)
+        write_wig(wig_data_exp_div[i], f'{path_out}WIG_files\Exp_NS_div_Cont_NS\\{Replic}\\{i}_+IP+Cfx_{Replic}_NS_div_-IP+Cfx_NS_{Replic}.wig', f'{i}_+IP+Cfx_{Replic}_NS/-IP+Cfx_{Replic}_NS', strain_id, n_round)
     return
 
-#NP_wrapper(WIG_control_NSF_input, WIG_exp_NS_input, 15, "NC_007779.1_w3110_Mu", Output_directory_div)
+#NPaired_wrapper(WIG_control_NS_input, WIG_exp_NS_input, 15, "NC_007779.1_w3110_Mu", Output_directory, 'R1')
+#NPaired_wrapper(WIG_control_NS_input, WIG_exp_NS_input, 15, "NC_007779.1_w3110_Mu", Output_directory, 'R2')
+
+##Reviewed untill here
 
 #######
 #Wrapp functions for plotting of sets of data of equial dimension (e.g. -IP+Cfx NS or NSF).
@@ -1469,5 +1504,62 @@ def Frac_of_rep(wig_in_raw_dir_R1, wig_in_raw_dir_R2, del_path, path_out):
     plt.close()     
     return
 
-Frac_of_rep(WIG_input_NN+'Raw_data\-IP+Cfx_R1\\', WIG_input_NN+'Raw_data\-IP+Cfx_R2\\', Deletions, Output_directory)
+#Frac_of_rep(WIG_input_NN+'Raw_data\-IP+Cfx_R1\\', WIG_input_NN+'Raw_data\-IP+Cfx_R2\\', Deletions, Output_directory)
 
+
+
+    
+#Primarily for colour codes.
+#Plot normalized and smoothed coverage.
+#Some hack to avoid some bug in matplotlib (OverflowError: In draw_path: Exceeded cell block limit)
+#See: https://stackoverflow.com/questions/37470734/matplotlib-giving-error-overflowerror-in-draw-path-exceeded-cell-block-limit
+#print("Samples are plotting...")
+#mpl.rcParams['agg.path.chunksize']=10000
+#xcoord=np.arange(0,4647999)
+#plt.figure(figsize=(16, 8), dpi=100)
+#plt.suptitle("E. coli synchronization", fontsize=20)
+#plot1=plt.subplot() 
+#plot1.plot(xcoord, wig_data_norm_sm[0], '--', label='-3 min', color='#550000', linewidth=1)
+#plot1.plot(xcoord, wig_data_norm_sm[1], '--', label='0 min', color='#801515', linewidth=1)
+#plot1.plot(xcoord, wig_data_norm_sm[2], '--', label='5 min', color='#AA3939', linewidth=1)
+#plot1.plot(xcoord, wig_data_norm_sm[3], '--', label='10 min', color='#D17E7E', linewidth=1)
+#plot1.plot(xcoord, wig_data_norm_sm[4], '--', label='15 min', color='#490029', linewidth=1)
+#plot1.plot(xcoord, wig_data_norm_sm[5], '--', label='20 min', color='#69073E', linewidth=1)
+#plot1.plot(xcoord, wig_data_norm_sm[6], '--', label='25 min', color='#882D60', linewidth=1)
+#plot1.plot(xcoord, wig_data_norm_sm[7], '--', label='30 min', color='#A8658B', linewidth=1)  
+#plot1.set_xlabel('Genome position, nt', size=17)
+#plot1.set_ylabel('Coverage depth', size=17)
+#plot1.legend(loc='upper left')
+#plt.show()
+#plt.savefig(path_out + 'Replic_2_+IP+Cfx_coverage_dynamic_1000.png', dpi=300, figsize=(16, 8))
+#plt.close()  
+
+'''
+#######
+#Normalize with neutral regioin coverage (isn't influenced by replication).
+#######
+
+def norm_neutral(wig_dir, n_round, strain_id, path_out, prefix, suffix):
+    #Read data.
+    wig_data=read_wig_files(wig_dir)
+    #Identify minimal coverage.
+    mean_coverage_ar=[]
+    for sample in wig_data:
+        mean_coverage_ar.append(np.mean(sample[0:2500000]))
+    Min_mean_coverage=min(mean_coverage_ar)
+    print('Min_mean_coverage: ' + str(Min_mean_coverage))    
+    #Normalize samples coverage (add pseudocount +1).
+    print("Samples are normalizing...")
+    wig_data_norm=[]
+    i=0
+    for sample in wig_data:
+        print("Now sample " + str(i+1) + " out of " + str(len(wig_data)) + " is normalizing...")
+        sample_norm=[x * Min_mean_coverage/mean_coverage_ar[i] for x in sample]
+        wig_data_norm.append(sample_norm)
+        write_wig(sample_norm, path_out + prefix + str(i) + suffix, i, strain_id, n_round) #filtered_20fh_
+        i+=1    
+    return
+
+#norm_neutral(WIG_input_NN+"\\NS\-IP+Cfx_R1\\", 15, "NC_007779.1_w3110_Mu", Output_directory, 'WIG_files\\NS_NN\-IP+Cfx\R1\\', "_-IP+Cfx_R1_normalized_smoothed_1000bp_nn.wig")
+#norm_neutral(WIG_input_NN+"\\NSF\-IP+Cfx_R1\\", 15, "NC_007779.1_w3110_Mu", Output_directory, 'WIG_files\\NSF_NN\-IP+Cfx\R1\\', "_-IP+Cfx_R1_normalized_smoothed_1000bp_filtered_20fh_nn.wig")
+'''
