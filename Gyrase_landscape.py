@@ -36,7 +36,7 @@ Dict_of_replicas={1 : "F:\Gyrase_landscape\Data\FE\Gyrase_tc_Topo-Seq_0min_avera
                   10 : "F:\Gyrase_landscape\Data\FE\Gyrase_Topo-Seq_Stationary_average_FE_Stat.wig",
                   }
 #Path to the csv with wig files merged to form a dataframe.
-Pathin="F:\Gyrase_landscape\Data\Gyrase_landscape.csv"
+Pathin="F:\Gyrase_landscape\Data\Gyrase_landscape_binned_10.csv"
 #Path for output correlation matrix.
 Outpath="F:\Gyrase_landscape\\"
 
@@ -84,19 +84,28 @@ def correlation_matrix(df, cor_method, title, outpath):
     return
 
 
-#Contains data of all replicas in separate arrays.
-#dict_of_replicas={}
-#for replica_name, replica_path in Dict_of_replicas.items():
-#    replic_data=wig_parsing(replica_path)
-#    dict_of_replicas[replica_name]=replic_data
-#    print(replica_name, len(replic_data))
+#########
+##Read input wig files and convert them.
+#########
+
+def read_wig_convert(Dict_of_replicas, binning_option):
+    #Contains data of all replicas in separate arrays.
+    dict_of_replicas={}
+    for replica_name, replica_path in Dict_of_replicas.items():
+        replic_data=wig_parsing(replica_path)
+        if binning_option>0:
+            replic_data_ar=np.array(replic_data)
+            replic_data_ar_binned=replic_data_ar[:(replic_data_ar.size // binning_option) * binning_option].reshape(-1, binning_option).mean(axis=1)  
+            dict_of_replicas[replica_name]=replic_data_ar_binned
+        elif binning_option==0:
+            dict_of_replicas[replica_name]=replic_data
+        print(replica_name, len(replic_data))
+    Gyrase_dataframe=pd.DataFrame(dict_of_replicas)
+    Gyrase_dataframe=Gyrase_dataframe[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
+    return Gyrase_dataframe
     
-
-#Gyrase_dataframe=pd.DataFrame(dict_of_replicas)
-#Gyrase_dataframe=Gyrase_dataframe[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
-
-#Gyrase_dataframe.to_csv(Pathin, sep='\t', index=False)
-
+Gyrase_dataframe=read_wig_convert(Dict_of_replicas, 10) 
+Gyrase_dataframe.to_csv(Pathin, sep='\t', index=False)
 
 Gyrase_dataframe=pd.read_csv(Pathin, sep='\t', header=0)
 print('Dataframe was read')
@@ -104,45 +113,42 @@ print('Dataframe was read')
 #correlation_matrix(Gyrase_dataframe, 'pearson', 'Correlation of Gyrase Topo-Seq time-points', Outpath+"Figures\Gyrase_Topo-Seq_time_points_correlation_matrix.png")
 #print('Correlation matrix was constructed!')
 
-Gyrase_dataframe=Gyrase_dataframe.head(len(Gyrase_dataframe))
-print(Gyrase_dataframe)
-Gyrase_dataframe_m=Gyrase_dataframe.as_matrix()
-Gyrase_dataframe_m=Gyrase_dataframe_m*10
-print(Gyrase_dataframe_m)
 
-df_dims=Gyrase_dataframe.shape
-rows_num=df_dims[0]
-cols_num=df_dims[1]
+#########
+##Subsamle dataframe and scale y and z axis.
+#########
 
-x_list=[]
-y_list=[]
-for i in range(rows_num):
-    x=[]
-    y=[]
-    for j in range(cols_num):
-        x.append(i)
-        y.append(j)
-    x_list.append(x)
-    y_list.append(y)
+def scale_and_subsample(Gyrase_dataframe, top, scale_signal, scale_genome):
+    Gyrase_dataframe=Gyrase_dataframe.head(top)
+    print(Gyrase_dataframe)
+    Gyrase_dataframe_m=Gyrase_dataframe.as_matrix()
+    Gyrase_dataframe_m=Gyrase_dataframe_m*scale_signal
+    print(Gyrase_dataframe_m)
+    
+    df_dims=Gyrase_dataframe.shape
+    rows_num=df_dims[0]
+    cols_num=df_dims[1]
 
-x_array=np.array(x_list, np.float64)
-x_array=x_array/int(len(Gyrase_dataframe)/10)
-y_array=np.array(y_list, np.float64)
-  
-print(x_array)
-print(y_array)
+    x_list=[]
+    y_list=[]
+    for i in range(rows_num):
+        x=[]
+        y=[]
+        for j in range(cols_num):
+            x.append(i)
+            y.append(j)
+        x_list.append(x)
+        y_list.append(y)
+    
+    x_array=np.array(x_list, np.float64)
+    x_array=x_array/scale_genome
+    y_array=np.array(y_list, np.float64)
+      
+    print(x_array)
+    print(y_array)
+    return x_array, y_array, Gyrase_dataframe_m
 
-def test_quiver3d():
-    x, y, z = np.mgrid[-2:3, -2:3, -2:3]
-    r = np.sqrt(x ** 2 + y ** 2 + z ** 4)
-    u = y * np.sin(r) / (r + 0.001)
-    v = -x * np.sin(r) / (r + 0.001)
-    w = np.zeros_like(z)
-    obj = quiver3d(x, y, z, u, v, w, line_width=3, scale_factor=1)
-    return obj
-
-#test_quiver3d()
-#mayavi.mlab.show()
+scale_and_subsample(Gyrase_dataframe, len(Gyrase_dataframe), scale_signal, scale_genome)
 
 """
 # Transform it to a long format
@@ -182,6 +188,19 @@ mayavi.mlab.show()
 #mayavi.mlab.show()
 
 
+def test_quiver3d():
+    x, y, z = np.mgrid[-2:3, -2:3, -2:3]
+    r = np.sqrt(x ** 2 + y ** 2 + z ** 4)
+    u = y * np.sin(r) / (r + 0.001)
+    v = -x * np.sin(r) / (r + 0.001)
+    w = np.zeros_like(z)
+    obj = quiver3d(x, y, z, u, v, w, line_width=3, scale_factor=1)
+    return obj
+
+#test_quiver3d()
+#mayavi.mlab.show()
+
+
 """ 
 # And transform the old column name in something numeric
 df['X']=pd.Categorical(df['X'])
@@ -205,10 +224,11 @@ plt.show()
 # Other palette
 ax.plot_trisurf(df['Y'], df['X'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
 plt.show()
-"""
+
 # vtk DataFile Version 2.0
 Dataset test10k
 ASCII
 DATASET STRUCTURED_GRID
 DIMENSIONS 10 10000 1
 POINTS 100000 float
+"""
