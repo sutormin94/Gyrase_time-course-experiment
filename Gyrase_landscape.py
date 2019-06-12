@@ -35,8 +35,10 @@ Dict_of_replicas={1 : "F:\Gyrase_landscape\Data\FE\Gyrase_tc_Topo-Seq_0min_avera
                   9 : "F:\Gyrase_landscape\Data\FE\Gyrase_tc_Topo-Seq_-3min_average_FE_Early_Stat.wig",
                   10 : "F:\Gyrase_landscape\Data\FE\Gyrase_Topo-Seq_Stationary_average_FE_Stat.wig",
                   }
+#Deletions info (regions of a genome to mask).
+Deletions=np.array([[274500, 372148], [793800, 807500], [1199000, 1214000]])
 #Path to the csv with wig files merged to form a dataframe.
-Pathin="F:\Gyrase_landscape\Data\Gyrase_landscape_binned_10.csv"
+Pathin="F:\Gyrase_landscape\Data\Gyrase_landscape_binned_1000_eq_scaled.csv"
 #Path for output correlation matrix.
 Outpath="F:\Gyrase_landscape\\"
 
@@ -91,21 +93,36 @@ def correlation_matrix(df, cor_method, title, outpath):
 def read_wig_convert(Dict_of_replicas, binning_option):
     #Contains data of all replicas in separate arrays.
     dict_of_replicas={}
+    dict_of_scalings={}
+    min_scaling=10000000
     for replica_name, replica_path in Dict_of_replicas.items():
         replic_data=wig_parsing(replica_path)
+        replic_data_ar=np.array(replic_data)
+        data_mean=np.mean(replic_data_ar)
+        dict_of_scalings[replica_name]=data_mean
+        if min_scaling>data_mean:
+            min_scaling=data_mean
         if binning_option>0:
-            replic_data_ar=np.array(replic_data)
             replic_data_ar_binned=replic_data_ar[:(replic_data_ar.size // binning_option) * binning_option].reshape(-1, binning_option).mean(axis=1)  
             dict_of_replicas[replica_name]=replic_data_ar_binned
         elif binning_option==0:
-            dict_of_replicas[replica_name]=replic_data
-        print(replica_name, len(replic_data))
-    Gyrase_dataframe=pd.DataFrame(dict_of_replicas)
+            dict_of_replicas[replica_name]=replic_data_ar
+        print(replica_name, len(replic_data_ar), min_scaling)
+    
+    #Scale datasets.
+    dict_of_replicas_scaled={}
+    for replica_name, replica_data in dict_of_replicas.items():
+        dict_of_replicas_scaled[replica_name]=(replica_data/dict_of_scalings[replica_name])*min_scaling
+        
+    Gyrase_dataframe=pd.DataFrame(dict_of_replicas_scaled)
     Gyrase_dataframe=Gyrase_dataframe[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
     return Gyrase_dataframe
-    
-Gyrase_dataframe=read_wig_convert(Dict_of_replicas, 10) 
-Gyrase_dataframe.to_csv(Pathin, sep='\t', index=False)
+
+
+##Implement smoothing!
+
+#Gyrase_dataframe=read_wig_convert(Dict_of_replicas, 1000) 
+#Gyrase_dataframe.to_csv(Pathin, sep='\t', index=False)
 
 Gyrase_dataframe=pd.read_csv(Pathin, sep='\t', header=0)
 print('Dataframe was read')
@@ -118,13 +135,15 @@ print('Dataframe was read')
 ##Subsamle dataframe and scale y and z axis.
 #########
 
-def scale_and_subsample(Gyrase_dataframe, top, scale_signal, scale_genome):
+def scale_subsample_mask(Gyrase_dataframe, top, scale_genome, scale_points, scale_signal, Deletions, binning_option):
+    #Subsample data
     Gyrase_dataframe=Gyrase_dataframe.head(top)
-    print(Gyrase_dataframe)
+    #print(Gyrase_dataframe)
     Gyrase_dataframe_m=Gyrase_dataframe.as_matrix()
     Gyrase_dataframe_m=Gyrase_dataframe_m*scale_signal
-    print(Gyrase_dataframe_m)
+    #print(Gyrase_dataframe_m)
     
+    #Prepare data with special format for mayavi surface.
     df_dims=Gyrase_dataframe.shape
     rows_num=df_dims[0]
     cols_num=df_dims[1]
@@ -140,15 +159,53 @@ def scale_and_subsample(Gyrase_dataframe, top, scale_signal, scale_genome):
         x_list.append(x)
         y_list.append(y)
     
+    #Scale data.
     x_array=np.array(x_list, np.float64)
     x_array=x_array/scale_genome
     y_array=np.array(y_list, np.float64)
-      
+    y_array=y_array/scale_points
+    
+    #Mask data.
+    print(Deletions)
+    Deletions=Deletions//binning_option
+    print(Deletions)
+    Deletions=Deletions/scale_genome
+    print(Deletions)
+    x_array_mask_1=((Deletions[0][1]>=x_array) & (x_array>=Deletions[0][0]))
+    x_array_mask_2=((Deletions[1][1]>=x_array) & (x_array>=Deletions[1][0]))
+    x_array_mask_3=((Deletions[2][1]>=x_array) & (x_array>=Deletions[2][0]))
+    x_array_mask_12=np.logical_or(x_array_mask_1, x_array_mask_2)
+    x_array_mask_123=np.logical_or(x_array_mask_12, x_array_mask_3)
     print(x_array)
-    print(y_array)
-    return x_array, y_array, Gyrase_dataframe_m
+    print(x_array_mask_123)
+    return x_array, y_array, Gyrase_dataframe_m, x_array_mask_123
 
-scale_and_subsample(Gyrase_dataframe, len(Gyrase_dataframe), scale_signal, scale_genome)
+x_array, y_array, z_array, masking_array=scale_subsample_mask(Gyrase_dataframe, len(Gyrase_dataframe), int(len(Gyrase_dataframe)/40), 0.2, 1, Deletions, 1000)
+
+
+m=mayavi.mlab.surf(x_array, y_array, z_array, extent=[np.min(x_array), np.max(x_array), np.min(y_array), np.max(y_array), np.min(z_array), 25], mask=masking_array)
+mlab.axes(xlabel='Positions, nt', ylabel='Time points', zlabel='Fold enrichment, scaled')
+#m.actor.actor.scale = (0.01, 1.0, 1.0)
+mayavi.mlab.show()
+
+
+#mayavi.mlab.test_surf()
+#mlab.axes(xlabel='y', ylabel='x', zlabel='z')
+#mayavi.mlab.show()
+
+
+def test_quiver3d():
+    x, y, z = np.mgrid[-2:3, -2:3, -2:3]
+    r = np.sqrt(x ** 2 + y ** 2 + z ** 4)
+    u = y * np.sin(r) / (r + 0.001)
+    v = -x * np.sin(r) / (r + 0.001)
+    w = np.zeros_like(z)
+    obj = quiver3d(x, y, z, u, v, w, line_width=3, scale_factor=1)
+    return obj
+
+#test_quiver3d()
+#mayavi.mlab.show()
+
 
 """
 # Transform it to a long format
@@ -175,30 +232,6 @@ print(dfzt)
 
 #print(Gyrase_dataframe.as_matrix())
 """
-
-
-m=mayavi.mlab.surf(x_array, y_array, Gyrase_dataframe_m, extent=[np.min(x_array), np.max(x_array), np.min(y_array), np.max(y_array), np.min(Gyrase_dataframe_m), 15])
-mlab.axes(xlabel='Positions, nt', ylabel='Time points', zlabel='Fold enrichment, scaled')
-#m.actor.actor.scale = (0.01, 1.0, 1.0)
-mayavi.mlab.show()
-
-
-#mayavi.mlab.test_surf()
-#mlab.axes(xlabel='y', ylabel='x', zlabel='z')
-#mayavi.mlab.show()
-
-
-def test_quiver3d():
-    x, y, z = np.mgrid[-2:3, -2:3, -2:3]
-    r = np.sqrt(x ** 2 + y ** 2 + z ** 4)
-    u = y * np.sin(r) / (r + 0.001)
-    v = -x * np.sin(r) / (r + 0.001)
-    w = np.zeros_like(z)
-    obj = quiver3d(x, y, z, u, v, w, line_width=3, scale_factor=1)
-    return obj
-
-#test_quiver3d()
-#mayavi.mlab.show()
 
 
 """ 
