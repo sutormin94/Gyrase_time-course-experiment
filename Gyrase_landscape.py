@@ -206,3 +206,9 @@ plt.show()
 ax.plot_trisurf(df['Y'], df['X'], df['Z'], cmap=plt.cm.jet, linewidth=0.01)
 plt.show()
 """
+# vtk DataFile Version 2.0
+Dataset test10k
+ASCII
+DATASET STRUCTURED_GRID
+DIMENSIONS 10 10000 1
+POINTS 100000 float
