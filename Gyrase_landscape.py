@@ -21,7 +21,7 @@ import seaborn as sns
 import mayavi
 from mayavi import mlab
 from mayavi.mlab import *
-import tvtk
+from tvtk.api import tvtk
 
 #Dictionary of time points 
 #'Replica name' : 'Path to wig file'
@@ -114,7 +114,7 @@ def read_wig_convert(Dict_of_replicas, binning_option):
     #Scale datasets.
     dict_of_replicas_scaled={}
     for replica_name, replica_data in dict_of_replicas.items():
-        replica_data_scaled=(replica_data/dict_of_scalings[replica_name])*min_scaling
+        replica_data_scaled=(replica_data/dict_of_scalings[replica_name])*1
         dict_of_replicas_scaled[replica_name]=replica_data_scaled
         print(f'{replica_name} mean, sum: {np.mean(replica_data_scaled)}, {np.sum(replica_data_scaled)}')
         
@@ -125,14 +125,14 @@ def read_wig_convert(Dict_of_replicas, binning_option):
 
 ##Implement smoothing!
 
-Gyrase_dataframe=read_wig_convert(Dict_of_replicas, 1000) 
-Gyrase_dataframe.to_csv(Pathin, sep='\t', index=False)
+#Gyrase_dataframe=read_wig_convert(Dict_of_replicas, 1000) 
+#Gyrase_dataframe.to_csv(Pathin, sep='\t', index=False)
 
 Gyrase_dataframe=pd.read_csv(Pathin, sep='\t', header=0)
 print('Dataframe was read')
 
-correlation_matrix(Gyrase_dataframe, 'pearson', 'Correlation of Gyrase Topo-Seq time-points', Outpath+"Figures\Gyrase_Topo-Seq_time_points_correlation_matrix_binned_1000_eq_scaled.png")
-print('Correlation matrix was constructed!')
+#correlation_matrix(Gyrase_dataframe, 'pearson', 'Correlation of Gyrase Topo-Seq time-points', Outpath+"Figures\Gyrase_Topo-Seq_time_points_correlation_matrix_binned_1000_eq_scaled.png")
+#print('Correlation matrix was constructed!')
 
 
 #########
@@ -170,27 +170,52 @@ def scale_subsample_mask(Gyrase_dataframe, top, scale_genome, scale_points, scal
     y_array=y_array/scale_points
     
     #Mask data.
-    print(Deletions)
+    #print(Deletions)
     Deletions=Deletions//binning_option
-    print(Deletions)
+    #print(Deletions)
     Deletions=Deletions/scale_genome
-    print(Deletions)
+    #print(Deletions)
     x_array_mask_1=((Deletions[0][1]>=x_array) & (x_array>=Deletions[0][0]))
     x_array_mask_2=((Deletions[1][1]>=x_array) & (x_array>=Deletions[1][0]))
     x_array_mask_3=((Deletions[2][1]>=x_array) & (x_array>=Deletions[2][0]))
     x_array_mask_12=np.logical_or(x_array_mask_1, x_array_mask_2)
     x_array_mask_123=np.logical_or(x_array_mask_12, x_array_mask_3)
-    print(x_array)
-    print(x_array_mask_123)
     return x_array, y_array, Gyrase_dataframe_m, x_array_mask_123
 
 x_array, y_array, z_array, masking_array=scale_subsample_mask(Gyrase_dataframe, len(Gyrase_dataframe), 100, 0.2, 1, Deletions, 1000)
 
 
-m=mayavi.mlab.surf(x_array, y_array, z_array, extent=[np.min(x_array), np.max(x_array), np.min(y_array), np.max(y_array), np.min(z_array), 25], mask=masking_array)
+m=mayavi.mlab.surf(x_array, y_array, z_array, extent=[np.min(x_array), np.max(x_array), np.min(y_array), np.max(y_array), z_array[z_array>0].min(), 25], mask=masking_array)
 mlab.axes(xlabel='Positions, nt', ylabel='Time points', zlabel='Fold enrichment, scaled')
-mlab.pipeline.user_defined(surf, filter=tvtk.CubeAxesActor())
+
+#Make a grid.
+xx=np.arange(np.min(x_array)-2, np.max(x_array), 1)
+yy=np.arange(np.min(y_array)-1, np.max(y_array), 1)
+zz=np.arange(z_array[z_array>0].min(), 25, 1)
+xy=xz=np.zeros_like(xx) 
+yx=yz=np.zeros_like(yy)
+zx=zy=np.zeros_like(zz) 
+#Decorate y ticks.
+ylabels=['0 min', '5 min', '10 min', '15 min', '20 min', '25 min', '30 min', 'Mid exp', 'Tran stat', 'Stat']
+for i in range(10):
+    lensoffset=((np.max(y_array)-np.min(y_array))/9)*i
+    mlab.plot3d(zx+np.max(x_array),zy+lensoffset,zz,line_width=1,tube_radius=0.1)
+    mlab.plot3d(xx,xy+lensoffset,xz,line_width=1,tube_radius=0.1)
+    mlab.text3d(-8, lensoffset, 0, ylabels[i], color=(1,1,1), opacity=1)   
+#Decorate x ticks.
+xlabels=['rRNA D', 'rRNA C', 'rRNA G', 'rRNA E', 'rRNA B', 'rRNA H', 'rRNA A', 'Mu SGS']
+xticks=[34.24400, 36.90771, 27.25847, 42.12776, 34.66047, 2.23771, 35.97167, 6.57709]
+for i in range(len(xticks)):
+    lensoffset=xticks[i]
+    mlab.plot3d(zx+lensoffset,zy+np.max(y_array),zz,line_width=1,tube_radius=0.1)
+    mlab.plot3d(yx+lensoffset,yy,yz,line_width=1,tube_radius=0.1)
+    mlab.text3d(lensoffset, -1, 0, xlabels[i], color=(1,1,1), opacity=1)   
 mayavi.mlab.show()
+
+
+#mlab.plot3d(yx,yy+lensoffset,yz,line_width=1,tube_radius=1)
+#mlab.plot3d(zx+np.max(x_array),zy+lensoffset,zz,line_width=1,tube_radius=0.1)
+#mlab.plot3d(xx,xy+lensoffset,xz,line_width=1,tube_radius=0.1)
 
 
 #mayavi.mlab.test_surf()
