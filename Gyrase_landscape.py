@@ -21,6 +21,7 @@ import seaborn as sns
 import mayavi
 from mayavi import mlab
 from mayavi.mlab import *
+import tvtk
 
 #Dictionary of time points 
 #'Replica name' : 'Path to wig file'
@@ -109,10 +110,13 @@ def read_wig_convert(Dict_of_replicas, binning_option):
             dict_of_replicas[replica_name]=replic_data_ar
         print(replica_name, len(replic_data_ar), min_scaling)
     
+    print(dict_of_scalings)
     #Scale datasets.
     dict_of_replicas_scaled={}
     for replica_name, replica_data in dict_of_replicas.items():
-        dict_of_replicas_scaled[replica_name]=(replica_data/dict_of_scalings[replica_name])*min_scaling
+        replica_data_scaled=(replica_data/dict_of_scalings[replica_name])*min_scaling
+        dict_of_replicas_scaled[replica_name]=replica_data_scaled
+        print(f'{replica_name} mean, sum: {np.mean(replica_data_scaled)}, {np.sum(replica_data_scaled)}')
         
     Gyrase_dataframe=pd.DataFrame(dict_of_replicas_scaled)
     Gyrase_dataframe=Gyrase_dataframe[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
@@ -121,14 +125,14 @@ def read_wig_convert(Dict_of_replicas, binning_option):
 
 ##Implement smoothing!
 
-#Gyrase_dataframe=read_wig_convert(Dict_of_replicas, 1000) 
-#Gyrase_dataframe.to_csv(Pathin, sep='\t', index=False)
+Gyrase_dataframe=read_wig_convert(Dict_of_replicas, 1000) 
+Gyrase_dataframe.to_csv(Pathin, sep='\t', index=False)
 
 Gyrase_dataframe=pd.read_csv(Pathin, sep='\t', header=0)
 print('Dataframe was read')
 
-#correlation_matrix(Gyrase_dataframe, 'pearson', 'Correlation of Gyrase Topo-Seq time-points', Outpath+"Figures\Gyrase_Topo-Seq_time_points_correlation_matrix.png")
-#print('Correlation matrix was constructed!')
+correlation_matrix(Gyrase_dataframe, 'pearson', 'Correlation of Gyrase Topo-Seq time-points', Outpath+"Figures\Gyrase_Topo-Seq_time_points_correlation_matrix_binned_1000_eq_scaled.png")
+print('Correlation matrix was constructed!')
 
 
 #########
@@ -180,12 +184,12 @@ def scale_subsample_mask(Gyrase_dataframe, top, scale_genome, scale_points, scal
     print(x_array_mask_123)
     return x_array, y_array, Gyrase_dataframe_m, x_array_mask_123
 
-x_array, y_array, z_array, masking_array=scale_subsample_mask(Gyrase_dataframe, len(Gyrase_dataframe), int(len(Gyrase_dataframe)/40), 0.2, 1, Deletions, 1000)
+x_array, y_array, z_array, masking_array=scale_subsample_mask(Gyrase_dataframe, len(Gyrase_dataframe), 100, 0.2, 1, Deletions, 1000)
 
 
 m=mayavi.mlab.surf(x_array, y_array, z_array, extent=[np.min(x_array), np.max(x_array), np.min(y_array), np.max(y_array), np.min(z_array), 25], mask=masking_array)
 mlab.axes(xlabel='Positions, nt', ylabel='Time points', zlabel='Fold enrichment, scaled')
-#m.actor.actor.scale = (0.01, 1.0, 1.0)
+mlab.pipeline.user_defined(surf, filter=tvtk.CubeAxesActor())
 mayavi.mlab.show()
 
 
