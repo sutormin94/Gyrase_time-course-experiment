@@ -201,7 +201,7 @@ for i in range(10):
     lensoffset=((np.max(y_array)-np.min(y_array))/9)*i
     mlab.plot3d(zx+np.max(x_array),zy+lensoffset,zz,line_width=1,tube_radius=0.1)
     mlab.plot3d(xx,xy+lensoffset,xz,line_width=1,tube_radius=0.1)
-    mlab.text3d(-8, lensoffset, 0, ylabels[i], color=(1,1,1), opacity=1)   
+    mlab.text3d(-8, lensoffset, 0, ylabels[i], color=(255,255,255), opacity=1)   
 #Decorate x ticks.
 xlabels=['rRNA D', 'rRNA C', 'rRNA G', 'rRNA E', 'rRNA B', 'rRNA H', 'rRNA A', 'Mu SGS']
 xticks=[34.24400, 36.90771, 27.25847, 42.12776, 34.66047, 2.23771, 35.97167, 6.57709]
@@ -209,7 +209,7 @@ for i in range(len(xticks)):
     lensoffset=xticks[i]
     mlab.plot3d(zx+lensoffset,zy+np.max(y_array),zz,line_width=1,tube_radius=0.1)
     mlab.plot3d(yx+lensoffset,yy,yz,line_width=1,tube_radius=0.1)
-    mlab.text3d(lensoffset, -1, 0, xlabels[i], color=(1,1,1), opacity=1)   
+    mlab.text3d(lensoffset, -1, 0, xlabels[i], color=(255,255,255), opacity=1)   
 mayavi.mlab.show()
 
 
