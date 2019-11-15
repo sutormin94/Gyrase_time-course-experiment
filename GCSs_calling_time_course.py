@@ -36,13 +36,13 @@ locale.getdefaultlocale()
 #######
 
 #Path to the working directory
-pwd="F:\Gyrase_time-course_experiment\Reads_eq\\"
+pwd="F:\E_coli_Topo-Seqs\Gyrase_Topo-Seq_data_coverage_depth\\"
 #Path to the file with regions to be omitted (e.g. deletions).
 Deletions="C:\Sutor\science\DNA-gyrase\scripts\Gyrase_Topo-seq\Additional_genome_features\Deletions_w3110_G_Mu_SGS.broadPeak"
 #Path to the reference genome
 Genome="C:\Sutor\science\DNA-gyrase\scripts\Gyrase_Topo-seq\Additional_genome_features\E_coli_w3110_G_Mu.fasta"
 #Confident level for GCSs calling.
-conf_level=0.05
+conf_level=0.01
 
 
 
@@ -455,208 +455,287 @@ def GCSs_caller(tetrade_dictionary, deletions_inpath, genome_path, path_out, con
 
 
 
+
+########################
+##Gyrase Cfx EP replics.
+########################
+#Paths to the WIG files contain N3E or N5E that forms a tetrade: A+IP+, A+IP-, A-IP+, A-IP-.
+#Name of the set (e.g. Cfx, RifCfx, Micro, Oxo and so on).
+Tetrade_EP_Cfx_1={'A+IP+': pwd + "Cfx_IP_Mu_10mkM_1\EP_Cfx_IP_Mu_10mkM_1_edt_N3E.wig",
+                  'A+IP-': pwd + "Cfx_IN_Mu_10mkM_1\EP_Cfx_IN_Mu_10mkM_1_edt_N3E.wig",
+                  'A-IP+': pwd + "Un_IP_Mu_1\\Un_IP_Mu_1_edt_N3E.wig", 
+                  'A-IP-': pwd + "Un_IN_Mu_1\\Un_IN_Mu_1_edt_N3E.wig",
+                  'Tetrade name': 'EP_Cfx_R1'
+                  }   
+#Output folder
+Path_for_output=f'{pwd}Test_GCSs_calling\\EP_Cfx_GCSs_calling_{conf_level}\\{Tetrade_EP_Cfx_1["Tetrade name"]}\\'
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_EP_Cfx_1, Deletions, Genome, Path_for_output, conf_level)
+
+Tetrade_EP_Cfx_2={'A+IP+': pwd + "Cfx_IP_Mu_10mkM_2\Cfx_IP_Mu_10mkM_2_edt_N3E.wig", 
+                  'A+IP-': pwd + "Cfx_IN_Mu_10mkM_2\Cfx_IN_Mu_10mkM_2_edt_N3E.wig",
+                  'A-IP+': pwd + "Un_IP_Mu_2\\Un_IP_Mu_2_edt_N3E.wig", 
+                  'A-IP-': pwd + "Un_IN_Mu_2\\Un_IN_Mu_2_edt_N3E.wig",
+                  'Tetrade name': 'EP_Cfx_R2'
+                  }
+#Output folder
+Path_for_output=f'{pwd}Test_GCSs_calling\\EP_Cfx_GCSs_calling_{conf_level}\\{Tetrade_EP_Cfx_2["Tetrade name"]}\\'
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)  
+GCSs_caller(Tetrade_EP_Cfx_2, Deletions, Genome, Path_for_output, conf_level)
+
+Tetrade_EP_Cfx_3={'A+IP+': pwd + "Cfx_IP_10mkM_3\Cfx_IP_10mkM_3_edt_N3E.wig", 
+                  'A+IP-': pwd + "Cfx_IN_10mkM_3\Cfx_IN_10mkM_3_edt_N3E.wig",
+                  'A-IP+': pwd + "Un_IP_3\\Un_IP_3_edt_N3E.wig", 
+                  'A-IP-': pwd + "Un_IN_3\\Un_IN_3_edt_N3E.wig",
+                  'Tetrade name': 'EP_Cfx_R3'
+                  }    
+#Output folder
+Path_for_output=f'{pwd}Test_GCSs_calling\\EP_Cfx_GCSs_calling_{conf_level}\\{Tetrade_EP_Cfx_3["Tetrade name"]}\\'
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_EP_Cfx_3, Deletions, Genome, Path_for_output, conf_level)
+
+
+#####################################################
+##Gyrase Cfx ESP replics from time-course experiment.
+#####################################################
 #############
 ###########R1
 #############
 #Paths to the WIG files contain N3E or N5E that forms a tetrade: A+IP+, A+IP-, A-IP+, A-IP-.
 #Name of the set (e.g. Cfx, RifCfx, Micro, Oxo and so on).
-Tetrade_minus_3_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\+IP+Cfx\DSu_17_S97_eq_edt_N3E.wig",
-                     'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_0_9_S89_eq_edt_N3E.wig",
-                     'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_0_9_S89_eq_edt_N3E.wig", 
-                     'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_0_9_S89_eq_edt_N3E.wig",
-                     'Tetrade name': '-3_min'
-                     }   
+Tetrade_minus_3_min={'A+IP+': pwd + "\\R1_time-course\+IP+Cfx\DSu_17_S97_eq_edt_N3E.wig", 
+                     'A+IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_0_9_S89_eq_edt_N3E.wig",
+                     'A-IP+': pwd + "\\R1_time-course\-IP+Cfx\\DSu_0_9_S89_eq_edt_N3E.wig", 
+                     'A-IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_0_9_S89_eq_edt_N3E.wig",
+                     'Tetrade name': '-3_min_R1'
+                     }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R1\\{Tetrade_minus_3_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_minus_3_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_minus_3_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_0_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\+IP+Cfx\DSu_18_S98_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_1_11_S91_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_1_11_S91_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_1_11_S91_eq_edt_N3E.wig",
-               'Tetrade name': '0_min'
+Tetrade_0_min={'A+IP+': pwd + "\\R1_time-course\+IP+Cfx\DSu_18_S98_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_1_11_S91_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R1_time-course\-IP+Cfx\\DSu_1_11_S91_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_1_11_S91_eq_edt_N3E.wig",
+               'Tetrade name': '0_min_R1'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R1\\{Tetrade_0_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_0_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
-    os.makedirs(Path_for_output)  
+    os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_0_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_5_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\+IP+Cfx\DSu_19_S99_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_2_10_S90_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_2_10_S90_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_2_10_S90_eq_edt_N3E.wig",
-               'Tetrade name': '5_min'
+Tetrade_5_min={'A+IP+': pwd + "\\R1_time-course\+IP+Cfx\DSu_19_S99_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_2_10_S90_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R1_time-course\-IP+Cfx\\DSu_2_10_S90_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_2_10_S90_eq_edt_N3E.wig",
+               'Tetrade name': '5_min_R1'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R1\\{Tetrade_5_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_5_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_5_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_10_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\+IP+Cfx\DSu_20_S100_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_3_12_S92_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_3_12_S92_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_3_12_S92_eq_edt_N3E.wig",
-               'Tetrade name': '10_min'
+Tetrade_10_min={'A+IP+': pwd + "\\R1_time-course\+IP+Cfx\DSu_20_S100_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_3_12_S92_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R1_time-course\-IP+Cfx\\DSu_3_12_S92_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_3_12_S92_eq_edt_N3E.wig",
+               'Tetrade name': '10_min_R1'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R1\\{Tetrade_10_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_10_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_10_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_15_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\+IP+Cfx\DSu_21_S101_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_4_15_S95_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_4_15_S95_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_4_15_S95_eq_edt_N3E.wig",
-               'Tetrade name': '15_min'
+Tetrade_15_min={'A+IP+': pwd + "\\R1_time-course\+IP+Cfx\DSu_21_S101_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_4_15_S95_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R1_time-course\-IP+Cfx\\DSu_4_15_S95_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_4_15_S95_eq_edt_N3E.wig",
+               'Tetrade name': '15_min_R1'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R1\\{Tetrade_15_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_15_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_15_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_20_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\+IP+Cfx\DSu_22_S102_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_5_14_S94_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_5_14_S94_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_5_14_S94_eq_edt_N3E.wig",
-               'Tetrade name': '20_min'
+Tetrade_20_min={'A+IP+': pwd + "\\R1_time-course\+IP+Cfx\DSu_22_S102_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_5_14_S94_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R1_time-course\-IP+Cfx\\DSu_5_14_S94_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_5_14_S94_eq_edt_N3E.wig",
+               'Tetrade name': '20_min_R1'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R1\\{Tetrade_20_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_20_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_20_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_25_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\+IP+Cfx\DSu_23_S103_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_6_13_S93_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_6_13_S93_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_6_13_S93_eq_edt_N3E.wig",
-               'Tetrade name': '25_min'
+Tetrade_25_min={'A+IP+': pwd + "\\R1_time-course\+IP+Cfx\DSu_23_S103_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_6_13_S93_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R1_time-course\-IP+Cfx\\DSu_6_13_S93_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_6_13_S93_eq_edt_N3E.wig",
+               'Tetrade name': '25_min_R1'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R1\\{Tetrade_25_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_25_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_25_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_30_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\+IP+Cfx\DSu_24_S104_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_7_16_S96_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_7_16_S96_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R1\-IP+Cfx\\DSu_7_16_S96_eq_edt_N3E.wig",
-               'Tetrade name': '30_min'
+Tetrade_30_min={'A+IP+': pwd + "\\R1_time-course\+IP+Cfx\DSu_24_S104_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_7_16_S96_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R1_time-course\-IP+Cfx\\DSu_7_16_S96_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R1_time-course\-IP+Cfx\\DSu_7_16_S96_eq_edt_N3E.wig",
+               'Tetrade name': '30_min_R1'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R1\\{Tetrade_30_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_30_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_30_min, Deletions, Genome, Path_for_output, conf_level)
 
 
+#####################################################
+##Gyrase Cfx ESP replics from time-course experiment.
+#####################################################
 #############
 ###########R2
 #############
 #Paths to the WIG files contain N3E or N5E that forms a tetrade: A+IP+, A+IP-, A-IP+, A-IP-.
 #Name of the set (e.g. Cfx, RifCfx, Micro, Oxo and so on).
-Tetrade_minus_3_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\+IP+Cfx\DSu_41_S113_eq_edt_N3E.wig",
-                     'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_33_S105_eq_edt_N3E.wig",
-                     'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_33_S105_eq_edt_N3E.wig", 
-                     'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_33_S105_eq_edt_N3E.wig",
-                     'Tetrade name': '-3_min'
+Tetrade_minus_3_min={'A+IP+': pwd + "\\R2_time-course\+IP+Cfx\DSu_41_S113_eq_edt_N3E.wig",
+                     'A+IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_33_S105_eq_edt_N3E.wig",
+                     'A-IP+': pwd + "\\R2_time-course\-IP+Cfx\\DSu_33_S105_eq_edt_N3E.wig", 
+                     'A-IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_33_S105_eq_edt_N3E.wig",
+                     'Tetrade name': '-3_min_R2'
                      }   
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R2\\{Tetrade_minus_3_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_minus_3_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_minus_3_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_0_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\+IP+Cfx\DSu_42_S114_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_34_S106_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_34_S106_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_34_S106_eq_edt_N3E.wig",
-               'Tetrade name': '0_min'
+Tetrade_0_min={'A+IP+': pwd + "\\R2_time-course\+IP+Cfx\DSu_42_S114_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_34_S106_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R2_time-course\-IP+Cfx\\DSu_34_S106_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_34_S106_eq_edt_N3E.wig",
+               'Tetrade name': '0_min_R2'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R2\\{Tetrade_0_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_0_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)  
 GCSs_caller(Tetrade_0_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_5_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\+IP+Cfx\DSu_43_S115_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_35_S107_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_35_S107_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_35_S107_eq_edt_N3E.wig",
-               'Tetrade name': '5_min'
+Tetrade_5_min={'A+IP+': pwd + "\\R2_time-course\+IP+Cfx\DSu_43_S115_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_35_S107_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R2_time-course\-IP+Cfx\\DSu_35_S107_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_35_S107_eq_edt_N3E.wig",
+               'Tetrade name': '5_min_R2'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R2\\{Tetrade_5_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_5_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_5_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_10_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\+IP+Cfx\DSu_44_S116_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_36_S108_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_36_S108_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_36_S108_eq_edt_N3E.wig",
-               'Tetrade name': '10_min'
+Tetrade_10_min={'A+IP+': pwd + "\\R2_time-course\+IP+Cfx\DSu_44_S116_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_36_S108_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R2_time-course\-IP+Cfx\\DSu_36_S108_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_36_S108_eq_edt_N3E.wig",
+               'Tetrade name': '10_min_R2'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R2\\{Tetrade_10_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_10_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_10_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_15_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\+IP+Cfx\DSu_45_S117_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_37_S109_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_37_S109_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_37_S109_eq_edt_N3E.wig",
-               'Tetrade name': '15_min'
+Tetrade_15_min={'A+IP+': pwd + "\\R2_time-course\+IP+Cfx\DSu_45_S117_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_37_S109_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R2_time-course\-IP+Cfx\\DSu_37_S109_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_37_S109_eq_edt_N3E.wig",
+               'Tetrade name': '15_min_R2'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R2\\{Tetrade_15_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_15_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_15_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_20_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\+IP+Cfx\DSu_46_S118_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_38_S110_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_38_S110_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_38_S110_eq_edt_N3E.wig",
-               'Tetrade name': '20_min'
+Tetrade_20_min={'A+IP+': pwd + "\\R2_time-course\+IP+Cfx\DSu_46_S118_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_38_S110_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R2_time-course\-IP+Cfx\\DSu_38_S110_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_38_S110_eq_edt_N3E.wig",
+               'Tetrade name': '20_min_R2'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R2\\{Tetrade_20_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_20_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_20_min, Deletions, Genome, Path_for_output, conf_level)
 
-Tetrade_25_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\+IP+Cfx\DSu_47_S119_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_39_S111_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_39_S111_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_39_S111_eq_edt_N3E.wig",
-               'Tetrade name': '25_min'
+Tetrade_25_min={'A+IP+': pwd + "\\R2_time-course\+IP+Cfx\DSu_47_S119_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_39_S111_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R2_time-course\-IP+Cfx\\DSu_39_S111_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_39_S111_eq_edt_N3E.wig",
+               'Tetrade name': '25_min_R2'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R2\\{Tetrade_25_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_25_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_25_min, Deletions, Genome, Path_for_output,conf_level)
 
-Tetrade_30_min={'A+IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\+IP+Cfx\DSu_48_S120_eq_edt_N3E.wig", 
-               'A+IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_40_S112_eq_edt_N3E.wig",
-               'A-IP+': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_40_S112_eq_edt_N3E.wig", 
-               'A-IP-': pwd + "WIG_files\Raw_wig\\N3E\R2\-IP+Cfx\\DSu_40_S112_eq_edt_N3E.wig",
-               'Tetrade name': '30_min'
+Tetrade_30_min={'A+IP+': pwd + "\\R2_time-course\+IP+Cfx\DSu_48_S120_eq_edt_N3E.wig", 
+               'A+IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_40_S112_eq_edt_N3E.wig",
+               'A-IP+': pwd + "\\R2_time-course\-IP+Cfx\\DSu_40_S112_eq_edt_N3E.wig", 
+               'A-IP-': pwd + "\\R2_time-course\-IP+Cfx\\DSu_40_S112_eq_edt_N3E.wig",
+               'Tetrade name': '30_min_R2'
                }
 #Output folder
-Path_for_output=f'{pwd}GCSs_analysis\GCSs_calling_{conf_level}\R2\\{Tetrade_30_min["Tetrade name"]}\\'
+Path_for_output=f'{pwd}Test_GCSs_calling\\TC_GCSs_calling_{conf_level}\\{Tetrade_30_min["Tetrade name"]}\\'
 if not os.path.exists(Path_for_output):
     os.makedirs(Path_for_output)
 GCSs_caller(Tetrade_30_min, Deletions, Genome, Path_for_output, conf_level)
+
+
+########################
+##Gyrase Cfx SP replics.
+########################
+#Paths to the WIG files contain N3E or N5E that forms a tetrade: A+IP+, A+IP-, A-IP+, A-IP-.
+#Name of the set (e.g. Cfx, RifCfx, Micro, Oxo and so on).
+Tetrade_SP_Cfx_1={'A+IP+': pwd + "SP_Cfx_IP_10mkM_1\SP_Cfx_10_mkM_IP_1_DSu_82_S69_edt_N3E.wig",
+                  'A+IP-': pwd + "SP_Cfx_IN_10mkM_1\SP_Cfx_10_mkM_1_IN_DSu_81_S68_edt_N3E.wig",
+                  'A-IP+': pwd + "SP_Un_IP_1\\DSu_80_S67_edt_N3E.wig", 
+                  'A-IP-': pwd + "SP_Un_IN_1\\DSu_79_S66_edt_N3E.wig",
+                  'Tetrade name': 'SP_Cfx_R1'
+                  }   
+#Output folder
+Path_for_output=f'{pwd}Test_GCSs_calling\\SP_Cfx_GCSs_calling_{conf_level}\\{Tetrade_SP_Cfx_1["Tetrade name"]}\\'
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)
+GCSs_caller(Tetrade_SP_Cfx_1, Deletions, Genome, Path_for_output, conf_level)
+
+Tetrade_SP_Cfx_2={'A+IP+': pwd + "SP_Cfx_IP_10mkM_2\DSu_86_S73_edt_N3E.wig", 
+                  'A+IP-': pwd + "SP_Cfx_IN_10mkM_2\DSu_85_S72_edt_N3E.wig",
+                  'A-IP+': pwd + "SP_Un_IP_2\\DSu_84_S71_edt_N3E.wig", 
+                  'A-IP-': pwd + "SP_Un_IN_2\\DSu_83_S70_edt_N3E.wig",
+                  'Tetrade name': 'SP_Cfx_R2'
+                  }
+#Output folder
+Path_for_output=f'{pwd}Test_GCSs_calling\\SP_Cfx_GCSs_calling_{conf_level}\\{Tetrade_SP_Cfx_2["Tetrade name"]}\\'
+if not os.path.exists(Path_for_output):
+    os.makedirs(Path_for_output)  
+GCSs_caller(Tetrade_SP_Cfx_2, Deletions, Genome, Path_for_output, conf_level)
 
 
 print('Script ended its work succesfully!')
